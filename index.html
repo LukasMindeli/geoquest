@@ -1581,8 +1581,9 @@ loadWorld().then(()=>{
     initFirebase();
     // Check if returning from Google redirect
     setTimeout(checkRedirectResult, 500);
-    // Chat starts after firebase ready
-    setTimeout(()=>{ if(db) loadChat(); updateAuthUI(null); }, 2000);
+    // Chat starts after firebase ready.
+    // Do not force a logged-out UI here: auth.onAuthStateChanged owns auth rendering.
+    setTimeout(()=>{ if(db) loadChat(); }, 2000);
     // Add speed buttons handled via mode selection in setup panel
     // (speed-flag and speed-click are now mode buttons in the grid)
   },700);
