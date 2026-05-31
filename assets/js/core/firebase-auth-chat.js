@@ -1,12 +1,25 @@
 let db = null, auth = null, currentUser = null;
 window._fbAuthPending = true;
 
+function getAuthHostConfig() {
+  const host = (typeof window !== 'undefined' && window.location && window.location.hostname) ? window.location.hostname : '';
+  const isCustomDomain = host === 'worldorwrong.com' || host === 'www.worldorwrong.com';
+  const isLocalDev = host === 'localhost' || host === '127.0.0.1';
+  return {
+    host,
+    isCustomDomain,
+    isLocalDev,
+    authDomain: isCustomDomain ? host : 'worldorwrong.firebaseapp.com'
+  };
+}
+
 function initFirebase() {
   try {
     if(typeof firebase === 'undefined') return;
+    const authHost = getAuthHostConfig();
     firebase.initializeApp({
       apiKey: "AIzaSyA_z-FWVWpGP3v-iTPkgQe8tUhuAN569GI",
-      authDomain: "worldorwrong.firebaseapp.com",
+      authDomain: authHost.authDomain,
       databaseURL: "https://worldorwrong-default-rtdb.firebaseio.com",
       projectId: "worldorwrong",
       storageBucket: "worldorwrong.firebasestorage.app",
@@ -147,7 +160,23 @@ async function signInGoogle() {
   if(!auth) return;
   try {
     const provider = new firebase.auth.GoogleAuthProvider();
-    // Redirect flow is more reliable for mobile and embedded browsers.
+    const authHost = getAuthHostConfig();
+    if(authHost.isLocalDev) {
+      try {
+        await auth.signInWithPopup(provider);
+        closeAuthGate(false);
+        runPostAuthAction();
+        return;
+      } catch(e) {
+        const fallbackCodes = new Set([
+          'auth/popup-blocked',
+          'auth/operation-not-supported-in-this-environment',
+          'auth/web-storage-unsupported'
+        ]);
+        if(!fallbackCodes.has(e?.code)) throw e;
+      }
+    }
+    // On the production custom domain, redirect works with same-origin auth helpers proxied by Vercel.
     await auth.signInWithRedirect(provider);
   } catch(e) { console.log('Auth error:', e.message); }
 }
