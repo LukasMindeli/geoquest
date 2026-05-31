@@ -710,6 +710,7 @@ let currentScreen='menu'; // menu | viewer | solo | mp
 
 function showScreen(s){
   currentScreen=s;
+  document.body.classList.toggle('viewer-active',s==='viewer');
   if(s!=='mp'){botActive=false;clearInterval(mpTid);}
   document.getElementById('main-menu').classList.remove('show');
   document.getElementById('solo-setup').classList.remove('show');

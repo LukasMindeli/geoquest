@@ -103,6 +103,7 @@ canvas.aim{cursor:crosshair!important;}
 .vb-btn{padding:6px 14px;border:1px solid var(--border);background:rgba(0,0,0,.55);color:var(--muted);font-family:'Space Mono',monospace;font-size:9px;letter-spacing:2px;cursor:pointer;transition:all .2s;backdrop-filter:blur(6px);}
 .vb-btn:hover,.vb-btn.active{border-color:var(--accent);color:var(--accent);background:rgba(79,255,176,.07);}
 .vb-spacer{flex:1;}
+body.viewer-active #auth-bar{top:56px;}
 
 /* HUD */
 #hud{position:fixed;inset:0;pointer-events:none;z-index:10;opacity:0;transition:opacity .3s;}
@@ -407,6 +408,7 @@ canvas.aim{cursor:crosshair!important;}
   .mp-panel{padding:24px 18px 28px;width:100%;}
   .ov-inner{width:100%;border-left:none;border-right:none;padding:20px 16px 24px;}
   #auth-bar{top:4px;right:8px;}
+  body.viewer-active #auth-bar{top:52px;}
 }
 /* Difficulty buttons */
 .diff-g{display:flex;gap:6px;margin-bottom:0;}
