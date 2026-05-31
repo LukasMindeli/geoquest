@@ -147,23 +147,8 @@ async function signInGoogle() {
   if(!auth) return;
   try {
     const provider = new firebase.auth.GoogleAuthProvider();
-    try {
-      await auth.signInWithPopup(provider);
-      closeAuthGate(false);
-      runPostAuthAction();
-      return;
-    } catch(e) {
-      const fallbackCodes = new Set([
-        'auth/popup-blocked',
-        'auth/operation-not-supported-in-this-environment',
-        'auth/web-storage-unsupported'
-      ]);
-      if(fallbackCodes.has(e?.code)) {
-        await auth.signInWithRedirect(provider);
-        return;
-      }
-      throw e;
-    }
+    // Redirect flow is more reliable for mobile and embedded browsers.
+    await auth.signInWithRedirect(provider);
   } catch(e) { console.log('Auth error:', e.message); }
 }
 
