@@ -31,6 +31,7 @@ function initFirebase() {
               if(typeof saveProfile === 'function') saveProfile();
             }
             updateAuthUI(user);
+            setTimeout(runPostAuthAction, 250);
           }).catch(()=>{});
         } else {
           updateAuthUI(null);
@@ -59,9 +60,59 @@ function updateAuthUI(user) {
 
 // Auth gate
 let _authGateCallback = null;
+let _authGateAction = null;
+const AUTH_ACTION_KEY = 'wow_post_auth_action';
 
-function showAuthGate(reason, callback) {
+function setPostAuthAction(action) {
+  _authGateAction = action || null;
+  try {
+    if(action) sessionStorage.setItem(AUTH_ACTION_KEY, action);
+    else sessionStorage.removeItem(AUTH_ACTION_KEY);
+  } catch(e) {}
+}
+
+function getPostAuthAction() {
+  if(_authGateAction) return _authGateAction;
+  try { return sessionStorage.getItem(AUTH_ACTION_KEY) || null; }
+  catch(e) { return null; }
+}
+
+function runPostAuthAction() {
+  const action = getPostAuthAction();
+  if(!action) return false;
+  setPostAuthAction(null);
+  closeAuthGate(false);
+  setTimeout(() => {
+    try {
+      if(action === 'profile') {
+        if(typeof openProfile === 'function') openProfile();
+        return;
+      }
+      if(action === 'online') {
+        if(typeof showScreen === 'function') showScreen('mp-setup');
+        const lobby = document.getElementById('mp-lobby');
+        if(lobby) lobby.classList.add('show');
+        if(typeof genCode === 'function' && typeof setMpStatus === 'function' && typeof initPeer === 'function') {
+          const code = genCode();
+          const room = document.getElementById('room-code');
+          if(room) room.textContent = '…';
+          setMpStatus('', '');
+          initPeer(code.toLowerCase());
+        }
+        return;
+      }
+      if(action === 'chat') {
+        if(typeof openChat === 'function') openChat();
+        setTimeout(() => document.getElementById('chat-input')?.focus(), 350);
+      }
+    } catch(e) { console.log('Post-auth action error:', e.message); }
+  }, 250);
+  return true;
+}
+
+function showAuthGate(reason, callback, action) {
   _authGateCallback = callback || null;
+  setPostAuthAction(action || null);
   const gate = document.getElementById('auth-gate');
   const title = document.getElementById('ag-title');
   const sub = document.getElementById('ag-sub');
@@ -86,17 +137,33 @@ function showAuthGate(reason, callback) {
   gate.classList.add('show');
 }
 
-function closeAuthGate() {
+function closeAuthGate(clearAction = true) {
   document.getElementById('auth-gate').classList.remove('show');
   _authGateCallback = null;
+  if(clearAction) setPostAuthAction(null);
 }
 
-function signInGoogle() {
+async function signInGoogle() {
   if(!auth) return;
   try {
     const provider = new firebase.auth.GoogleAuthProvider();
-    // Use redirect instead of popup - works on all browsers/domains
-    auth.signInWithRedirect(provider);
+    try {
+      await auth.signInWithPopup(provider);
+      closeAuthGate(false);
+      runPostAuthAction();
+      return;
+    } catch(e) {
+      const fallbackCodes = new Set([
+        'auth/popup-blocked',
+        'auth/operation-not-supported-in-this-environment',
+        'auth/web-storage-unsupported'
+      ]);
+      if(fallbackCodes.has(e?.code)) {
+        await auth.signInWithRedirect(provider);
+        return;
+      }
+      throw e;
+    }
   } catch(e) { console.log('Auth error:', e.message); }
 }
 
@@ -105,8 +172,8 @@ function checkRedirectResult() {
   if(!auth) return;
   auth.getRedirectResult().then(result => {
     if(result && result.user) {
-      closeAuthGate();
-      if(_authGateCallback) { _authGateCallback(); _authGateCallback = null; }
+      closeAuthGate(false);
+      runPostAuthAction();
     }
   }).catch(e => console.log('Redirect result error:', e.message));
 }
@@ -178,7 +245,7 @@ function sendChat() {
     showAuthGate('chat', () => {
       // After login, focus the input
       setTimeout(()=>document.getElementById('chat-input').focus(), 500);
-    });
+    }, 'chat');
     return;
   }
   const inp = document.getElementById('chat-input');

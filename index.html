@@ -1095,12 +1095,12 @@ document.getElementById('btn-multi').addEventListener('click',()=>{
   if(!currentUser){showAuthGate('online',()=>{
     showScreen('mp-setup');document.getElementById('mp-lobby').classList.add('show');
     const code=genCode();document.getElementById('room-code').textContent='…';setMpStatus('','');initPeer(code.toLowerCase());
-  });return;}
+  },'online');return;}
   showScreen('mp-setup');document.getElementById('mp-lobby').classList.add('show');
   const code=genCode();document.getElementById('room-code').textContent='…';setMpStatus('','');initPeer(code.toLowerCase());
 });
 document.getElementById('btn-profile').addEventListener('click',()=>{
-  if(!currentUser){showAuthGate('login',()=>setTimeout(openProfile,800));return;}
+  if(!currentUser){showAuthGate('login',()=>setTimeout(openProfile,800),'profile');return;}
   openProfile();
 });
 document.getElementById('btn-daily').addEventListener('click',openDaily);

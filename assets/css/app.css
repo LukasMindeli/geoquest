@@ -102,6 +102,21 @@ canvas.aim{cursor:crosshair!important;}
 #viewer-bar.show{display:flex;}
 .vb-btn{padding:6px 14px;border:1px solid var(--border);background:rgba(0,0,0,.55);color:var(--muted);font-family:'Space Mono',monospace;font-size:9px;letter-spacing:2px;cursor:pointer;transition:all .2s;backdrop-filter:blur(6px);}
 .vb-btn:hover,.vb-btn.active{border-color:var(--accent);color:var(--accent);background:rgba(79,255,176,.07);}
+.vb-btn#vb-back{
+  padding:7px 16px;
+  color:#fff;
+  font-weight:700;
+  letter-spacing:1.6px;
+  border-color:rgba(255,255,255,.38);
+  background:linear-gradient(180deg,rgba(12,18,30,.92),rgba(0,0,0,.62));
+  box-shadow:0 8px 24px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.08);
+  text-shadow:0 0 12px rgba(255,255,255,.14);
+}
+.vb-btn#vb-back:hover{
+  border-color:var(--gold);
+  color:var(--gold);
+  background:linear-gradient(180deg,rgba(18,24,40,.96),rgba(0,0,0,.74));
+}
 .vb-spacer{flex:1;}
 body.viewer-active #auth-bar{top:56px;}
 
