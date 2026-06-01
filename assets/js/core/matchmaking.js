@@ -3,8 +3,18 @@ let mmMode = 'click', mmReg = 'world', mmSetupStep = 'mode';
 let mmCountdownTid = null;
 window.mmQueueRole = null;
 
-const BOT_NAMES = ['GeoMaster','WorldWizard','MapHunter','AtlasKing','GlobeRunner',
-  'CapitalPro','FlagExpert','EarthSeeker','NationBrain','TerraQuiz'];
+const OPPONENT_FIRST_NAMES = [
+  'Alex','Mila','Leo','Emma','Arman','Sofia','Daniel','Maya','Victor','Elena',
+  'Amir','Nora','Lucas','Anna','Marco','Layla','Denis','Eva','Timur','Zoe'
+];
+const OPPONENT_LAST_NAMES = ['Carter','Novak','Silva','Kim','Hassan'];
+const OPPONENT_NAMES = OPPONENT_FIRST_NAMES.flatMap(first =>
+  OPPONENT_LAST_NAMES.map(last => `${first} ${last}`)
+);
+
+function getRandomOpponentName() {
+  return OPPONENT_NAMES[Math.floor(Math.random() * OPPONENT_NAMES.length)];
+}
 
 function getRegionLabel(reg) {
   const labels = {
@@ -114,7 +124,7 @@ function beginMmCountdown({ title, subtitle, meta, startAt, onDone }) {
 function beginRandomMatchStart(payload, amHost) {
   soloMode = payload.mode || mmMode;
   mpReg = payload.reg || mmReg;
-  mpPool = (payload.pool || []).map(id => ({ id, name: COUNTRIES[id]?.n || String(id) }));
+  mpPool = (payload.pool || []).map(id => ({ id, name: cName(id) || String(id) }));
   const myName = amHost ? (payload.hostName || t('Игрок','Player')) : (payload.guestName || (currentUser?.displayName || profileData.name || t('Игрок','Player')));
   const oppName = amHost ? (payload.guestName || t('Соперник','Opponent')) : (payload.hostName || t('Соперник','Opponent'));
   const startAt = payload.startAt || (Date.now() + (payload.countdownMs || 5000));
@@ -136,10 +146,10 @@ function startRandomMatchAsHost() {
   window.mmQueueRole = null;
   const hostName = currentUser ? (currentUser.displayName || profileData.name || t('Игрок','Player')) : (profileData.name || t('Игрок','Player'));
   const startAt = Date.now() + 5000;
-  let pool = shuffled(rpool(mmReg)).map(c => c.id);
+  let pool = shuffled(rpool(mmReg, mmMode)).map(c => c.id);
   if(pool.length < 2) {
     mmReg = 'world';
-    pool = shuffled(rpool(mmReg)).map(c => c.id);
+    pool = shuffled(rpool(mmReg, mmMode)).map(c => c.id);
   }
   const payload = {
     type: 'start',
@@ -164,7 +174,7 @@ function startRandomBotFallback() {
     mmRef = null;
   }
   window.mmQueueRole = null;
-  const botName = BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)];
+  const botName = getRandomOpponentName();
   const startAt = Date.now() + 5000;
   beginMmCountdown({
     title: t('Соперник найден','Opponent found'),
@@ -240,20 +250,50 @@ function startMatchmaking() {
   });
 }
 
-// ── BOT MATCH ─────────────────────────────────────────────────
+function getFallbackOpponentPoints(kind = 'success') {
+  if(kind === 'missed-player') return 45 + Math.floor(Math.random() * 30);
+  return 110 + Math.floor(Math.random() * 95);
+}
+
+function resolveFallbackChallenge(cid, nm) {
+  mpState = 'waiting';
+  hideOv(cid);
+  setOverlay(cid, 0xffcc44, .2);
+  document.getElementById('mp-role').textContent = t('РЕЖИМ: СОПЕРНИК ОТВЕЧАЕТ', 'MODE: OPPONENT ANSWERS');
+  setMpInstructionText(t('Соперник отвечает…', 'Opponent is answering…'));
+  document.getElementById('mp-sel-hint').textContent = `${nm} • ${typeof getModeLabel === 'function' ? getModeLabel(soloMode) : soloMode}`;
+  document.getElementById('mp-tv').textContent = '';
+  document.getElementById('mp-tb').style.width = '100%';
+  scheduleMpStep(() => {
+    if(!botActive) return;
+    const success = Math.random() < 0.82;
+    if(success) {
+      mpOppScore += getFallbackOpponentPoints('success');
+      flash(true,'✓');
+    } else {
+      document.getElementById('mp-sel-hint').textContent = t('Соперник не успел ответить','Opponent ran out of time');
+      flash(false,'⏱');
+    }
+    updMpScores();
+    scheduleMpStep(() => nextBotRound(), 1200);
+  }, 1400 + Math.floor(Math.random() * 800));
+}
+
+// ── FALLBACK OPPONENT MATCH ───────────────────────────────────
 let botActive = false, botTid = null;
 
 function startBotMatch(botName = null, region = 'world', mode = mmMode) {
   botActive = true;
   soloMode = mode;
+  if(typeof resetMpGameplayState === 'function') resetMpGameplayState();
   mpMyName = currentUser ? (currentUser.displayName||'Ты') : (profileData.name||'Ты');
-  mpOppName = botName || BOT_NAMES[Math.floor(Math.random()*BOT_NAMES.length)];
+  mpOppName = botName || getRandomOpponentName();
   mpMyScore = 0; mpOppScore = 0; mpRound = 0;
   mpReg = region;
-  mpPool = shuffled(rpool(region));
+  mpPool = shuffled(rpool(region, mode));
   if(mpPool.length < 2) {
     mpReg = 'world';
-    mpPool = shuffled(rpool('world'));
+    mpPool = shuffled(rpool('world', mode));
   }
   document.getElementById('mps-n1').textContent = mpMyName;
   document.getElementById('mps-n2').textContent = mpOppName;
@@ -263,7 +303,9 @@ function startBotMatch(botName = null, region = 'world', mode = mmMode) {
 }
 
 function nextBotRound() {
+  if(!botActive) return;
   if(mpRound >= mpTotalRounds) { showMpResult(); return; }
+  resetMpQuestionUi();
   hideAllOv(); clearHov();
   targId = mpPool[mpRound % mpPool.length].id;
   const nm = cName(targId);
@@ -272,60 +314,43 @@ function nextBotRound() {
   updMpRound();
 
   if(mpRole === 'finder') {
-    // Player finds — bot already "selected"
-    document.getElementById('mp-role').textContent = 'НАЙДИ СТРАНУ';
-    document.getElementById('mp-instruction').textContent = nm.toUpperCase();
-    document.getElementById('mp-sel-hint').textContent = 'Нажми на страну на глобусе!';
-    document.getElementById('mp-confirm').style.display = 'none';
-    mpState = 'finding'; mpFindTargetId = targId;
-    setOverlay(targId, 0x44aaff, 0.0); // don't highlight — player must find
-    mpTimeLeft = MP_TIME; syncMpTimer();
-    mpTid = setInterval(() => {
-      mpTimeLeft--; syncMpTimer();
-      if(mpTimeLeft <= 0) {
-        clearInterval(mpTid); mpState = 'done';
-        setOverlay(mpFindTargetId, 0xff3344, .35);
-        flash(false,'⏱');
-        // Bot gets points for this
-        mpOppScore += 50; updMpScores();
-        setTimeout(() => nextBotRound(), 1800);
+    startMpFindingRound(targId, soloMode, nm, {
+      onSuccess: () => {
+        const pts = mpTimeLeft * 5 + 100;
+        mpMyScore += pts;
+        setOverlay(targId, 0x00ee77, .45);
+        flash(true,'✓');
+        updMpScores();
+        scheduleMpStep(() => nextBotRound(), 1200);
+      },
+      onFailure: (reason = 'timeout', clickedId = null) => {
+        if(clickedId && clickedId !== targId) setOverlay(clickedId, 0xff3344, .4);
+        if(targId) setOverlay(targId, reason === 'wrong' ? 0x00ee77 : 0xff3344, .35);
+        const answer = getMpRevealAnswer(soloMode, targId);
+        if(answer) document.getElementById('mp-sel-hint').textContent = t('Ответ: ','Answer: ') + answer;
+        flash(false, reason === 'wrong' ? '✗' : '⏱');
+        mpOppScore += getFallbackOpponentPoints('missed-player');
+        updMpScores();
+        scheduleMpStep(() => nextBotRound(), 1800);
       }
-    }, 1000);
-  } else {
-    // Bot selects — player must guess which country bot "picked"
-    document.getElementById('mp-role').textContent = 'УГАДАЙ СТРАНУ БОТА';
-    document.getElementById('mp-instruction').textContent = '???';
-    document.getElementById('mp-sel-hint').textContent = 'Бот загадал страну — найди её!';
-    document.getElementById('mp-confirm').style.display = 'none';
-    setOverlay(targId, 0xffaa00, 0.0);
-    mpState = 'finding'; mpFindTargetId = targId;
-    mpTimeLeft = MP_TIME; syncMpTimer();
-    mpTid = setInterval(() => {
-      mpTimeLeft--; syncMpTimer();
-      if(mpTimeLeft <= 0) {
-        clearInterval(mpTid); mpState = 'done';
-        setOverlay(mpFindTargetId, 0xff3344, .35);
-        flash(false,'⏱');
-        mpOppScore += 30; updMpScores();
-        setTimeout(() => nextBotRound(), 1800);
-      }
-    }, 1000);
+    });
+    return;
   }
+
+  startMpSelectingRound({
+    instruction: t('Тапни, чтобы загадать страну','Tap to choose a country'),
+    hint: t('Выбери любую страну. Соперник получит вопрос: ','Pick any country. Opponent will get: ') + (typeof getModeLabel === 'function' ? getModeLabel(soloMode) : soloMode),
+    onConfirm: resolveFallbackChallenge
+  });
 }
 
 function onBotClick(cid) {
-  if(!botActive || mpState !== 'finding') return;
-  clearInterval(mpTid); mpState = 'done';
-  if(cid === mpFindTargetId) {
-    const pts = mpTimeLeft * 5 + 100;
-    mpMyScore += pts; setOverlay(cid, 0x00ee77, .45);
-    flash(true,'✓'); updMpScores();
-    setTimeout(() => nextBotRound(), 1200);
-  } else {
-    setOverlay(cid, 0xff3344, .4); setOverlay(mpFindTargetId, 0x00ee77, .35);
-    flash(false,'✗'); mpOppScore += 30; updMpScores();
-    setTimeout(() => nextBotRound(), 1800);
-  }
+  if(!botActive || mpState !== 'finding' || mpFindMode !== 'click') return;
+  clearInterval(mpTid);
+  mpTid = null;
+  mpState = 'done';
+  if(cid === mpFindTargetId) mpOnFindSuccess?.();
+  else mpOnFindFailure?.('wrong', cid);
 }
 // ═══════════════════════════════════════════════════════════════
 //  MATCHMAKING UI

@@ -450,10 +450,21 @@ body.viewer-active #auth-bar{top:56px;}
   position:relative;
   z-index:1;
   font-family:'Syne',sans-serif;
-  font-size:48px;
+  width:86px;
+  height:86px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:50%;
+  background:rgba(3,8,18,.92);
+  box-shadow:inset 0 0 0 1px rgba(255,204,68,.08),0 0 24px rgba(255,204,68,.05);
+  font-size:54px;
   font-weight:800;
   color:var(--gold);
   line-height:1;
+  font-variant-numeric:tabular-nums;
+  text-shadow:0 2px 12px rgba(255,204,68,.25);
+  padding-top:2px;
 }
 .mm-ready-sub{
   font-size:18px;

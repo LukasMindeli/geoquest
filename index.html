@@ -129,7 +129,7 @@
       </button>
       <button class="mm-btn wide" id="btn-random" style="border-color:rgba(255,204,68,.3)">
         <span class="mi">🎲</span><span data-ru="Случайный соперник" data-en="Random Opponent">Случайный соперник</span>
-        <span class="md" data-ru="Найти рандомного игрока онлайн (или бота)" data-en="Find a random player online (or bot)">Найти рандомного игрока онлайн (или бота)</span>
+        <span class="md" data-ru="Найти случайного соперника онлайн" data-en="Find a random opponent online">Найти случайного соперника онлайн</span>
       </button>
       <button class="mm-btn" id="btn-daily">
         <span class="mi">📅</span><span data-ru="Ежедневный" data-en="Daily Challenge">Ежедневный</span>
@@ -776,7 +776,11 @@ let currentScreen='menu'; // menu | viewer | solo | mp
 function showScreen(s){
   currentScreen=s;
   document.body.classList.toggle('viewer-active',s==='viewer');
-  if(s!=='mp'){botActive=false;clearInterval(mpTid);}
+  if(s!=='mp'){
+    botActive=false;
+    clearMpPendingSteps();
+    resetMpQuestionUi();
+  }
   document.getElementById('main-menu').classList.remove('show');
   document.getElementById('solo-setup').classList.remove('show');
   document.getElementById('hud').classList.remove('show');
@@ -860,7 +864,21 @@ function regionMatches(country, reg){
   return country.r===reg;
 }
 
-function rpool(reg){return Object.entries(COUNTRIES).filter(([id,c])=>regionMatches(c, reg)).filter(([id])=>soloMode!=='capital'||CAPITALS[+id]).map(([id,c])=>({id:parseInt(id),name:cName(parseInt(id))}));}
+function modeSupportsCountry(mode,id){
+  if(!COUNTRIES[id]) return false;
+  if(mode==='capital') return !!CAPITALS[id];
+  if(mode==='flag') return !!flagUrl(id);
+  if(mode==='landmark') return !!LANDMARKS[id];
+  if(mode==='leader') return !!LEADERS[id];
+  if(mode==='religion') return !!RELIGIONS[id];
+  return true;
+}
+function rpool(reg,mode=soloMode){
+  return Object.entries(COUNTRIES)
+    .filter(([,c])=>regionMatches(c, reg))
+    .filter(([id])=>modeSupportsCountry(mode,+id))
+    .map(([id])=>({id:parseInt(id,10),name:cName(parseInt(id,10))}));
+}
 function shuffled(a){return[...a].sort(()=>Math.random()-.5);}
 
 function startSolo(){
@@ -888,6 +906,10 @@ function clickA(cid){
   else{recordStat('wrong',targId);setOverlay(cid,0xff3344,.35);setOverlay(targId,0x00ee77,.4);sBad(cName(targId));}
 }
 document.getElementById('tinput').addEventListener('input',e=>{
+  if(currentScreen==='mp'&&mpState==='finding'&&(mpFindMode==='type'||mpFindMode==='capital'||mpFindMode==='flag')){
+    handleMpTextAnswer(e.target);
+    return;
+  }
   if(gst!=='play'||(soloMode!=='type'&&soloMode!=='capital'&&soloMode!=='flag'))return;
   const v=e.target.value.trim().toLowerCase().replace(/ё/g,'е');
   if(soloMode==='type'){
@@ -914,6 +936,13 @@ document.getElementById('tinput').addEventListener('input',e=>{
   }
 });
 document.getElementById('tinput').addEventListener('keydown',e=>{
+  if(currentScreen==='mp'&&mpState==='finding'&&(mpFindMode==='type'||mpFindMode==='capital'||mpFindMode==='flag')&&e.key==='Enter'){
+    if(!e.target.classList.contains('ok')){
+      e.target.className='bad';
+      setTimeout(()=>{if(e.target.className==='bad')e.target.className='';},400);
+    }
+    return;
+  }
   if(e.key==='Enter'&&gst==='play'&&(soloMode==='type'||soloMode==='capital'||soloMode==='flag')){
     e.target.className='bad';setTimeout(()=>{if(e.target.className==='bad')e.target.className='';},400);
   }
@@ -986,8 +1015,276 @@ let mpTid=null, mpTimeLeft=0;
 let mpState='idle'; // idle | selecting | finding | waiting | done
 let mpMyName='Я', mpOppName='Соперник';
 let mpPool=[];
+let mpFindTargetId=null, mpFindMode='click';
+let mpSelHighlight=null, mpOnSelectConfirm=null;
+let mpOnFindSuccess=null, mpOnFindFailure=null;
+let mpPendingSteps=[], mpSessionId=0;
 
 const MP_TIME=20;
+
+function clearMpPendingSteps(){
+  mpPendingSteps.forEach(id=>clearTimeout(id));
+  mpPendingSteps=[];
+}
+
+function scheduleMpStep(fn,delay){
+  const session=mpSessionId;
+  const id=setTimeout(()=>{
+    mpPendingSteps=mpPendingSteps.filter(x=>x!==id);
+    if(session!==mpSessionId)return;
+    fn();
+  },delay);
+  mpPendingSteps.push(id);
+  return id;
+}
+
+function resetMpQuestionUi(){
+  clearInterval(mpTid);
+  mpTid=null;
+  hideMcPanel();
+  document.getElementById('flag-display').style.display='none';
+  document.getElementById('type-wrap').style.display='none';
+  document.getElementById('mp-confirm').style.display='none';
+  const inp=document.getElementById('tinput');
+  inp.value='';
+  inp.className='';
+}
+
+function resetMpGameplayState(){
+  mpSessionId++;
+  clearMpPendingSteps();
+  resetMpQuestionUi();
+  mpState='idle';
+  mpSelId=null;
+  mpSelName='';
+  mpFindTargetId=null;
+  mpFindMode=soloMode||'click';
+  mpOnSelectConfirm=null;
+  mpOnFindSuccess=null;
+  mpOnFindFailure=null;
+  if(mpSelHighlight!==null){
+    hideOv(mpSelHighlight);
+    mpSelHighlight=null;
+  }
+}
+
+function enterMenuFromMp(){
+  if(typeof botActive!=='undefined')botActive=false;
+  resetMpGameplayState();
+  if(conn)try{conn.close();}catch(e){}
+  if(peer)try{peer.destroy();}catch(e){}
+  showScreen('menu');
+  document.getElementById('main-menu').classList.add('show');
+}
+
+function rotateToCountry(id,zoomZ=3.8){
+  if(!centroids[id])return;
+  const cd=centroids[id].userData;
+  rotateTo(cd.lat,cd.lng,zoomZ);
+}
+
+function getMpRevealAnswer(mode,id){
+  if(!id)return '';
+  if(mode==='capital')return capName(id);
+  if(mode==='leader')return lang==='ru'?LEADERS[id]?.name:LEADERS[id]?.nameEn;
+  if(mode==='religion')return RELIGIONS[id]||'';
+  if(mode==='landmark')return lang==='ru'?LANDMARKS[id]?.name:LANDMARKS[id]?.nameEn;
+  return cName(id);
+}
+
+function setMpInstructionHtml(html){
+  document.getElementById('mp-instruction').innerHTML=html;
+}
+
+function setMpInstructionText(text){
+  document.getElementById('mp-instruction').textContent=text;
+}
+
+function startMpRoundTimer(onTimeout){
+  clearInterval(mpTid);
+  mpTimeLeft=MP_TIME;
+  syncMpTimer();
+  mpTid=setInterval(()=>{
+    mpTimeLeft--;
+    syncMpTimer();
+    if(mpTimeLeft<=0){
+      clearInterval(mpTid);
+      mpTid=null;
+      mpState='done';
+      onTimeout?.();
+    }
+  },1000);
+}
+
+function finishLiveMpSuccess(){
+  const pts=mpTimeLeft*5+100;
+  mpMyScore+=pts;
+  if(mpFindTargetId)setOverlay(mpFindTargetId,0x00ee77,.4);
+  flash(true,'✓');
+  updMpScores();
+  send({type:'found',pts});
+  scheduleMpStep(()=>{mpRound++;nextMpRound();},1600);
+}
+
+function finishLiveMpFailure(reason='timeout',clickedId=null){
+  if(clickedId&&clickedId!==mpFindTargetId)setOverlay(clickedId,0xff3344,.4);
+  if(mpFindTargetId)setOverlay(mpFindTargetId,reason==='wrong'?0x00ee77:0xff3344,.35);
+  const answer=getMpRevealAnswer(mpFindMode,mpFindTargetId);
+  if(answer)document.getElementById('mp-sel-hint').textContent=t('Ответ: ','Answer: ')+answer;
+  flash(false,reason==='wrong'?'✗':'⏱');
+  send({type:'timeout'});
+  scheduleMpStep(()=>{mpRound++;nextMpRound();},2000);
+}
+
+function startMpSelectingRound(opts={}){
+  mpState='selecting';
+  mpRole='selector';
+  mpOnSelectConfirm=opts.onConfirm||((cid,nm)=>confirmChallenge(cid,nm,soloMode));
+  resetMpQuestionUi();
+  setMpInstructionText(opts.instruction||t('Тапни, чтобы загадать страну','Tap to choose a country'));
+  document.getElementById('mp-role').textContent=opts.role||t('РЕЖИМ: ЗАГАДЫВАЕШЬ','MODE: YOU SET THE QUESTION');
+  document.getElementById('mp-sel-hint').textContent=opts.hint||(
+    t('Соперник получит вопрос: ','Opponent will get: ')+(typeof getModeLabel==='function'?getModeLabel(soloMode):soloMode)
+  );
+  document.getElementById('mp-tv').textContent='';
+  document.getElementById('mp-tb').style.width='100%';
+}
+
+function startMpFindingRound(targetId,mode,name,handlers={}){
+  mpFindTargetId=parseInt(targetId,10);
+  mpFindMode=mode||soloMode||'click';
+  mpState='finding';
+  mpOnFindSuccess=handlers.onSuccess||finishLiveMpSuccess;
+  mpOnFindFailure=handlers.onFailure||finishLiveMpFailure;
+  resetMpQuestionUi();
+
+  const nm=name||cName(mpFindTargetId);
+  if(mpFindMode==='click'){
+    document.getElementById('mp-role').textContent=t('РЕЖИМ: ИЩЕШЬ СТРАНУ','MODE: FIND THE COUNTRY');
+    setMpInstructionText(nm.toUpperCase());
+    document.getElementById('mp-sel-hint').textContent=t('Найди эту страну на глобусе!','Find this country on the globe!');
+    startMpRoundTimer(()=>mpOnFindFailure?.('timeout'));
+    return;
+  }
+
+  if(mpFindMode==='type'){
+    document.getElementById('mp-role').textContent=t('РЕЖИМ: УГАДАЙ НАЗВАНИЕ','MODE: GUESS THE NAME');
+    setMpInstructionText(t('Как называется эта страна?','What country is this?'));
+    document.getElementById('mp-sel-hint').textContent=t('Введи название страны','Enter the country name');
+    document.getElementById('type-wrap').style.display='block';
+    document.getElementById('tinput').placeholder=t('Введите название страны…','Enter country name…');
+    setOverlay(mpFindTargetId,0x44aaff,.32);
+    rotateToCountry(mpFindTargetId,3.6);
+    setTimeout(()=>document.getElementById('tinput').focus(),50);
+    startMpRoundTimer(()=>mpOnFindFailure?.('timeout'));
+    return;
+  }
+
+  if(mpFindMode==='capital'){
+    document.getElementById('mp-role').textContent=t('РЕЖИМ: УГАДАЙ СТОЛИЦУ','MODE: GUESS THE CAPITAL');
+    setMpInstructionText(nm.toUpperCase());
+    document.getElementById('mp-sel-hint').textContent=t('Введи столицу этой страны','Enter this country capital');
+    document.getElementById('type-wrap').style.display='block';
+    document.getElementById('tinput').placeholder=t('Введите столицу…','Enter capital…');
+    setOverlay(mpFindTargetId,0xffaa00,.32);
+    rotateToCountry(mpFindTargetId,3.6);
+    setTimeout(()=>document.getElementById('tinput').focus(),50);
+    startMpRoundTimer(()=>mpOnFindFailure?.('timeout'));
+    return;
+  }
+
+  if(mpFindMode==='flag'){
+    document.getElementById('mp-role').textContent=t('РЕЖИМ: УГАДАЙ ФЛАГ','MODE: GUESS THE FLAG');
+    setMpInstructionText(t('Чей это флаг?','Whose flag is this?'));
+    document.getElementById('mp-sel-hint').textContent=t('Введи название страны','Enter the country name');
+    document.getElementById('type-wrap').style.display='block';
+    document.getElementById('tinput').placeholder=t('Введите название страны…','Enter country name…');
+    const url=flagUrl(mpFindTargetId);
+    if(url){
+      document.getElementById('flag-img').src=url;
+      document.getElementById('flag-display').style.display='block';
+    }
+    setTimeout(()=>document.getElementById('tinput').focus(),50);
+    startMpRoundTimer(()=>mpOnFindFailure?.('timeout'));
+    return;
+  }
+
+  if(mpFindMode==='landmark'){
+    const lm=LANDMARKS[mpFindTargetId];
+    document.getElementById('mp-role').textContent=t('РЕЖИМ: ДОСТОПРИМЕЧАТЕЛЬНОСТЬ','MODE: LANDMARK');
+    setMpInstructionHtml(`<span style="font-size:34px;display:block;line-height:1;margin-bottom:6px">${lm.img}</span><span style="font-size:clamp(13px,2vw,20px)">${lang==='ru'?lm.name:lm.nameEn}</span>`);
+    document.getElementById('mp-sel-hint').textContent=t('Выбери правильную страну','Choose the correct country');
+    rotateToCountry(mpFindTargetId,4);
+    startMpRoundTimer(()=>mpOnFindFailure?.('timeout'));
+    showMcPanel(getMcChoices('landmark',mpFindTargetId,mpPool),(ok)=>{
+      clearInterval(mpTid);
+      mpTid=null;
+      mpState='done';
+      if(ok)mpOnFindSuccess?.();
+      else mpOnFindFailure?.('wrong');
+    });
+    return;
+  }
+
+  if(mpFindMode==='leader'){
+    const ldr=LEADERS[mpFindTargetId];
+    document.getElementById('mp-role').textContent=t('РЕЖИМ: ЛИДЕР СТРАНЫ','MODE: COUNTRY LEADER');
+    setMpInstructionText(nm.toUpperCase());
+    document.getElementById('mp-sel-hint').textContent=t('Выбери правильного лидера','Choose the correct leader');
+    setOverlay(mpFindTargetId,0x44aaff,.25);
+    rotateToCountry(mpFindTargetId,3.5);
+    startMpRoundTimer(()=>mpOnFindFailure?.('timeout'));
+    showMcPanel(getMcChoices('leader',mpFindTargetId,mpPool),(ok)=>{
+      clearInterval(mpTid);
+      mpTid=null;
+      mpState='done';
+      if(ok)mpOnFindSuccess?.();
+      else mpOnFindFailure?.('wrong');
+    });
+    return;
+  }
+
+  if(mpFindMode==='religion'){
+    document.getElementById('mp-role').textContent=t('РЕЖИМ: РЕЛИГИЯ','MODE: RELIGION');
+    setMpInstructionText(nm.toUpperCase());
+    document.getElementById('mp-sel-hint').textContent=t('Выбери правильную религию','Choose the correct religion');
+    setOverlay(mpFindTargetId,0xffaa00,.25);
+    rotateToCountry(mpFindTargetId,3.5);
+    startMpRoundTimer(()=>mpOnFindFailure?.('timeout'));
+    showMcPanel(getMcChoices('religion',mpFindTargetId,mpPool),(ok)=>{
+      clearInterval(mpTid);
+      mpTid=null;
+      mpState='done';
+      if(ok)mpOnFindSuccess?.();
+      else mpOnFindFailure?.('wrong');
+    });
+  }
+}
+
+function handleMpTextAnswer(input){
+  const v=input.value.trim().toLowerCase().replace(/ё/g,'е');
+  let ok=false;
+  if(mpFindMode==='type'){
+    const m=ALIASES[v]||(lang==='en'?Object.entries(EN).find(([,n])=>n.toLowerCase()===v)?.[1]:null);
+    ok=!!(m&&(lang==='ru'?COUNTRIES[mpFindTargetId]?.n===m:EN[mpFindTargetId]===m||COUNTRIES[mpFindTargetId]?.n===m));
+    if(!ok&&lang==='en'&&EN[mpFindTargetId]&&EN[mpFindTargetId].toLowerCase()===v)ok=true;
+  }else if(mpFindMode==='capital'){
+    const cap=CAPITALS[mpFindTargetId];
+    if(cap){
+      const correct0=cap[0].toLowerCase().replace(/ё/g,'е');
+      const correct1=cap[1].toLowerCase();
+      ok=v===correct0||v===correct1;
+    }
+  }else if(mpFindMode==='flag'){
+    ok=(EN[mpFindTargetId]&&EN[mpFindTargetId].toLowerCase()===v)||(ALIASES[v]&&COUNTRIES[mpFindTargetId]?.n===ALIASES[v]);
+  }
+  if(!ok)return;
+  clearInterval(mpTid);
+  mpTid=null;
+  mpState='done';
+  input.className='ok';
+  mpOnFindSuccess?.();
+}
 
 function genCode(){return Math.random().toString(36).substr(2,6).toUpperCase();}
 
@@ -1011,11 +1308,12 @@ function initPeer(id){
     document.getElementById('mp-host-ready').textContent='Начать игру';
     document.getElementById('mp-host-ready').onclick=()=>{
       mpReg=document.querySelector('#mp-reg-g .rb.sel').dataset.reg;
-      mpPool=shuffled(rpool(mpReg));
+      mpPool=shuffled(rpool(mpReg,soloMode));
       isHost=true;mpMyScore=0;mpOppScore=0;mpRound=0;
       send({
         type:'start',
         reg:mpReg,
+        mode:soloMode,
         pool:mpPool.map(c=>c.id),
         hostName: currentUser?.displayName || profileData.name || 'Хозяин',
         guestName: 'Гость'
@@ -1056,7 +1354,8 @@ function send(data){if(conn&&conn.open)conn.send(data);}
 
 function onMpData(data){
   if(data.type==='start'){
-    mpPool=data.pool.map(id=>({id,name:COUNTRIES[id].n}));
+    soloMode=data.mode||soloMode||'click';
+    mpPool=(data.pool||[]).map(id=>({id,name:cName(id)}));
     mpReg=data.reg;isHost=false;mpMyScore=0;mpOppScore=0;mpRound=0;
     if(data.randomQueue && (data.startAt || data.countdownMs)){
       beginRandomMatchStart(data, false);
@@ -1069,17 +1368,17 @@ function onMpData(data){
   } else if(data.type==='challenge'){
     // Host sends challenge to guest (finder)
     mpSelName=data.name;
-    startFinding(data.name);
+    startFinding(data.id,data.mode||soloMode,data.name);
   } else if(data.type==='found'){
     // Guest found the country — host receives result
     mpOppScore+=data.pts;
     updMpScores();
     flash(true,'✓');
-    setTimeout(()=>nextMpRound(),1500);
+    scheduleMpStep(()=>{mpRound++;nextMpRound();},1500);
   } else if(data.type==='timeout'){
     // Guest timed out
     flash(false,'⏱');
-    setTimeout(()=>nextMpRound(),1500);
+    scheduleMpStep(()=>{mpRound++;nextMpRound();},1500);
   } else if(data.type==='ready'){
     // Both ready for next round
     nextMpRound();
@@ -1091,6 +1390,7 @@ function onMpData(data){
 
 function startMpGame(amHost, meta = {}){
   window.mmQueueRole = null;
+  resetMpGameplayState();
   showScreen('mp');
   document.getElementById('mp-game').classList.add('show');
   mpRound=0;mpMyScore=0;mpOppScore=0;
@@ -1103,8 +1403,10 @@ function startMpGame(amHost, meta = {}){
 }
 
 function nextMpRound(){
+  resetMpQuestionUi();
   hideAllOv();clearHov();
   if(mpRound>=mpTotalRounds){
+    if(typeof botActive!=='undefined')botActive=false;
     send({type:'done'});showMpResult();return;
   }
   // Alternate roles: even rounds host selects, odd rounds guest selects
@@ -1119,23 +1421,18 @@ function nextMpRound(){
   } else {
     // wait for challenge from opponent
     mpState='waiting';
-    document.getElementById('mp-instruction').textContent='Ждём загадку…';
-    document.getElementById('mp-role').textContent='РЕЖИМ: ОТГАДЫВАЕШЬ';
-    document.getElementById('mp-sel-hint').textContent='';
-    document.getElementById('mp-confirm').style.display='none';
+    setMpInstructionText(t('Ждём вопрос…','Waiting for the question…'));
+    document.getElementById('mp-role').textContent=t('РЕЖИМ: ОТГАДЫВАЕШЬ','MODE: GET READY');
+    document.getElementById('mp-sel-hint').textContent=t('Соперник выбирает страну','Opponent is choosing a country');
   }
 }
 
-let mpSelHighlight=null;
 function startSelecting(suggestedC){
-  mpState='selecting';
-  mpRole='selector';
-  document.getElementById('mp-role').textContent='РЕЖИМ: ЗАГАДЫВАЕШЬ';
-  document.getElementById('mp-instruction').textContent='Кликни на страну, чтобы загадать её';
-  document.getElementById('mp-sel-hint').textContent='Выбери любую страну на глобусе';
-  document.getElementById('mp-confirm').style.display='none';
-  document.getElementById('mp-tv').textContent='';
-  document.getElementById('mp-tb').style.width='100%';
+  startMpSelectingRound({
+    instruction:t('Тапни, чтобы загадать страну','Tap to choose a country'),
+    hint:t('Соперник получит вопрос: ','Opponent will get: ')+(typeof getModeLabel==='function'?getModeLabel(soloMode):soloMode),
+    onConfirm:(cid,nm)=>confirmChallenge(cid,nm,soloMode)
+  });
 }
 
 function mpClick(cid){
@@ -1144,63 +1441,41 @@ function mpClick(cid){
     // Selector chose a country
     if(mpSelHighlight!==null&&mpSelHighlight!==cid)hideOv(mpSelHighlight);
     mpSelId=cid;mpSelHighlight=cid;
-    const nm=COUNTRIES[cid]?COUNTRIES[cid].n:String(cid);
+    const nm=cName(cid);
     setOverlay(cid,0xffcc44,.35);
-    document.getElementById('mp-sel-hint').textContent='Загадать: '+nm+'?';
+    document.getElementById('mp-sel-hint').textContent=t('Загадать: ','Lock in: ')+nm+'?';
     document.getElementById('mp-confirm').style.display='inline-block';
     document.getElementById('mp-confirm').onclick=()=>{
-      confirmChallenge(cid,nm);
+      (mpOnSelectConfirm||confirmChallenge)(cid,nm,soloMode);
     };
   } else if(mpState==='finding'){
-    // Finder clicked
-    clearInterval(mpTid);mpState='done';
+    if(mpFindMode!=='click')return;
+    clearInterval(mpTid);mpTid=null;mpState='done';
     if(cid===mpFindTargetId){
-      const pts=mpTimeLeft*5+100;mpMyScore+=pts;
-      setOverlay(cid,0x00ee77,.45);
-      flash(true,'✓');updMpScores();
-      send({type:'found',pts});
-      setTimeout(()=>{mpRound++;nextMpRound();},1600);
+      mpOnFindSuccess?.();
     } else {
-      setOverlay(cid,0xff3344,.4);setOverlay(mpFindTargetId,0x00ee77,.35);
-      flash(false,'✗');
-      send({type:'timeout'});
-      setTimeout(()=>{mpRound++;nextMpRound();},2000);
+      mpOnFindFailure?.('wrong',cid);
     }
   }
 }
 
-let mpFindTargetId=null;
-function confirmChallenge(cid,nm){
+function confirmChallenge(cid,nm,mode=soloMode){
   mpState='waiting';
   hideOv(cid);setOverlay(cid,0xffcc44,.2);
-  document.getElementById('mp-instruction').textContent='Соперник ищет: '+nm;
-  document.getElementById('mp-sel-hint').textContent='';
-  document.getElementById('mp-confirm').style.display='none';
+  document.getElementById('mp-role').textContent=t('РЕЖИМ: ВОПРОС ОТПРАВЛЕН','MODE: QUESTION SENT');
+  setMpInstructionText(t('Соперник отвечает…','Opponent is answering…'));
+  document.getElementById('mp-sel-hint').textContent=`${nm} • ${typeof getModeLabel==='function'?getModeLabel(mode):mode}`;
   document.getElementById('mp-tv').textContent='';
-  send({type:'challenge',id:cid,name:nm});
+  document.getElementById('mp-tb').style.width='100%';
+  send({type:'challenge',id:cid,name:nm,mode});
   // Selector sees the dimmed globe, waiting
 }
 
-function startFinding(name){
-  mpFindTargetId=Object.entries(COUNTRIES).find(([,c])=>c.n===name)?.[0];
-  mpFindTargetId=mpFindTargetId?parseInt(mpFindTargetId):null;
-  mpState='finding';
-  document.getElementById('mp-role').textContent='РЕЖИМ: ИЩЕШЬ СТРАНУ';
-  document.getElementById('mp-instruction').textContent=name.toUpperCase();
-  document.getElementById('mp-sel-hint').textContent='Найди эту страну на глобусе!';
-  document.getElementById('mp-confirm').style.display='none';
-  // Start timer
-  mpTimeLeft=MP_TIME;syncMpTimer();
-  mpTid=setInterval(()=>{
-    mpTimeLeft--;syncMpTimer();
-    if(mpTimeLeft<=0){
-      clearInterval(mpTid);mpState='done';
-      if(mpFindTargetId)setOverlay(mpFindTargetId,0xff3344,.35);
-      flash(false,'⏱');
-      send({type:'timeout'});
-      setTimeout(()=>{mpRound++;nextMpRound();},2000);
-    }
-  },1000);
+function startFinding(targetId,mode=soloMode,name=''){
+  startMpFindingRound(targetId,mode,name,{
+    onSuccess:finishLiveMpSuccess,
+    onFailure:finishLiveMpFailure
+  });
 }
 
 function syncMpTimer(){
@@ -1221,6 +1496,9 @@ function updMpRound(){
 }
 
 function showMpResult(){
+  clearMpPendingSteps();
+  resetMpQuestionUi();
+  if(typeof botActive!=='undefined')botActive=false;
   currentScreen='mp-result';
   document.getElementById('mp-game').classList.remove('show');
   const iWon=mpMyScore>mpOppScore;
@@ -1359,10 +1637,9 @@ document.getElementById('sp-lb-btn').addEventListener('click',()=>{
 });
 
 // MP lobby
-document.getElementById('mp-back').addEventListener('click',()=>{if(peer)try{peer.destroy();}catch(e){}showScreen('menu');document.getElementById('main-menu').classList.add('show');});
+document.getElementById('mp-back').addEventListener('click',()=>{enterMenuFromMp();});
 document.getElementById('mp-exit-btn').addEventListener('click',()=>{
-  botActive=false;clearInterval(mpTid);if(conn)try{conn.close();}catch(e){}if(peer)try{peer.destroy();}catch(e){}
-  showScreen('menu');document.getElementById('main-menu').classList.add('show');
+  enterMenuFromMp();
 });
 document.getElementById('btn-join').addEventListener('click',()=>{
   const code=document.getElementById('join-code').value.trim();
@@ -1377,14 +1654,14 @@ document.querySelectorAll('#mp-reg-g .rb').forEach(b=>b.addEventListener('click'
 // MP result
 document.getElementById('mpr-again').addEventListener('click',()=>{
   document.getElementById('mp-result').classList.remove('show');
+  resetMpGameplayState();
   mpRound=0;mpMyScore=0;mpOppScore=0;
   startMpGame(isHost);
-  if(isHost)send({type:'start',reg:mpReg,pool:mpPool.map(c=>c.id)});
+  if(isHost)send({type:'start',reg:mpReg,mode:soloMode,pool:mpPool.map(c=>c.id)});
 });
 document.getElementById('mpr-menu').addEventListener('click',()=>{
-  if(peer)try{peer.destroy();}catch(e){}
   document.getElementById('mp-result').classList.remove('show');
-  showScreen('menu');document.getElementById('main-menu').classList.add('show');
+  enterMenuFromMp();
 });
 
 // ═══════════════════════════════════════════════════════════════
