@@ -11,6 +11,11 @@ The ready-to-paste rules are stored in:
 
 - `firebase-rtdb.rules.json`
 
+The Firebase CLI project config is stored in:
+
+- `firebase.json`
+- `.firebaserc`
+
 ## What these rules do
 
 - deny everything by default
@@ -22,6 +27,16 @@ The ready-to-paste rules are stored in:
 - add indexes for `leaderboard.score`, `chat.ts`, and `matchmaking.ts`
 
 ## How to apply
+
+### Firebase CLI
+
+From the project root:
+
+```bash
+npx firebase-tools deploy --only database
+```
+
+### Firebase Console
 
 1. Open Firebase Console.
 2. Go to `Realtime Database`.
