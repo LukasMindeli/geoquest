@@ -180,6 +180,8 @@ body.viewer-active #auth-bar{top:56px;}
 #tbar-wrap{position:absolute;top:0;left:50%;transform:translateX(-50%);padding:15px 40px 18px;text-align:center;background:linear-gradient(to bottom,rgba(3,8,18,.97) 55%,transparent);min-width:300px;pointer-events:none;}
 .tbl{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:4px;color:var(--muted);margin-bottom:7px;}
 #tname{font-size:clamp(18px,2.8vw,34px);font-weight:800;color:#fff;letter-spacing:2px;line-height:1;}
+#solo-flag-display{text-align:center;margin:8px 0 4px;}
+#solo-flag-img{width:min(160px,34vw);height:auto;border:1px solid var(--border);display:block;margin:0 auto;background:rgba(255,255,255,.04);}
 #type-wrap{pointer-events:all;margin-top:11px;display:none;}
 #tinput{width:210px;padding:8px 13px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);color:#fff;font-family:'Space Mono',monospace;font-size:12px;text-align:center;outline:none;letter-spacing:2px;transition:border-color .2s;}
 #tinput:focus{border-color:var(--accent);}

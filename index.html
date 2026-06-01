@@ -231,6 +231,7 @@
   <div id="tbar-wrap">
     <div class="tbl" id="mode-lbl">НАЙДИ СТРАНУ</div>
     <div id="tname">—</div>
+    <div id="solo-flag-display" style="display:none;margin-top:6px"><img id="solo-flag-img" src="" alt=""/></div>
     <div id="type-wrap"><input id="tinput" type="text" placeholder="Введите название…" autocomplete="off" spellcheck="false"/></div>
   </div>
   <div id="sl2"><div class="slb">Очки</div><div class="sv" id="sc">0</div><div class="ss" id="stk">×1</div></div>
@@ -779,6 +780,7 @@ let currentScreen='menu'; // menu | viewer | solo | mp
 function showScreen(s){
   currentScreen=s;
   document.body.classList.toggle('viewer-active',s==='viewer');
+  if(s!=='solo') resetSoloTransientUi();
   if(s!=='mp'){
     botActive=false;
     clearMpPendingSteps();
@@ -805,6 +807,42 @@ const QS=10,LIVES=3,TA=15,TB=20;
 let gst='menu',soloMode='click',soloReg='world';
 let activePool=[],score=0,lives=LIVES,streak=0,qIdx=0,targId=null;
 let timeLeft=0,tid=null,cok=false,prog=[],best=0;
+let soloPendingSteps=[];
+
+function clearSoloPendingSteps(){
+  soloPendingSteps.forEach(id=>clearTimeout(id));
+  soloPendingSteps=[];
+}
+
+function scheduleSoloStep(fn,delay){
+  const id=setTimeout(()=>{
+    soloPendingSteps=soloPendingSteps.filter(x=>x!==id);
+    if(currentScreen!=='solo')return;
+    fn();
+  },delay);
+  soloPendingSteps.push(id);
+  return id;
+}
+
+function resetSoloTransientUi(){
+  clearSoloPendingSteps();
+  clearInterval(tid);
+  tid=null;
+  gst='over';
+  cok=false;
+  hideMcPanel();
+  hideAllOv();
+  clearHov();
+  tip.style.display='none';
+  document.getElementById('type-wrap').style.display='none';
+  document.getElementById('solo-flag-display').style.display='none';
+  document.getElementById('solo-flag-img').src='';
+  const inp=document.getElementById('tinput');
+  inp.value='';
+  inp.className='';
+  document.getElementById('hint').className='';
+  document.getElementById('flash').className='';
+}
 
 const MODE_LABELS = {
   click:{ru:'🖱️ Найди страну', en:'🖱️ Find the country'},
@@ -963,14 +1001,14 @@ function sGood(){
   const b=timeLeft*6+streak*15;score+=120+b;streak++;
   profileData.maxStreak=Math.max(profileData.maxStreak||0,streak);
   prog[qIdx]='ok';setOverlay(targId,0x00ee77,.4);flash(true,'✓');updHUD();
-  qIdx++;if(qIdx>=curQS)setTimeout(()=>endSolo(true),1100);else setTimeout(()=>nextQ(),1100);
+  qIdx++;if(qIdx>=curQS)scheduleSoloStep(()=>endSolo(true),1100);else scheduleSoloStep(()=>nextQ(),1100);
 }
 function sBad(nm){
   lives--;streak=0;profileData.flagStreak=0;prog[qIdx]='bad';
   recordStat('wrong',targId);
   const hint=soloMode==='capital'?t('Столица: ','Capital: ')+capName(targId):t('Ответ: ','Answer: ')+nm;
   showHint(hint);flash(false,'✗');updHUD();
-  if(lives<=0){setTimeout(()=>endSolo(false),1600);return;}qIdx++;setTimeout(()=>nextQ(),1900);
+  if(lives<=0){scheduleSoloStep(()=>endSolo(false),1600);return;}qIdx++;scheduleSoloStep(()=>nextQ(),1900);
 }
 function onTimeout(nm){
   prog[qIdx]='bad';lives--;streak=0;profileData.flagStreak=0;
@@ -978,13 +1016,12 @@ function onTimeout(nm){
   setOverlay(targId,0xff3344,.35);
   const hint=soloMode==='capital'?t('Столица: ','Capital: ')+capName(targId):t('Ответ: ','Answer: ')+nm;
   showHint(hint);flash(false,'⏱');updHUD();
-  if(lives<=0){setTimeout(()=>endSolo(false),1600);return;}qIdx++;setTimeout(()=>nextQ(),1900);
+  if(lives<=0){scheduleSoloStep(()=>endSolo(false),1600);return;}qIdx++;scheduleSoloStep(()=>nextQ(),1900);
 }
 function showHint(t){const h=document.getElementById('hint');h.textContent=t;h.className='show';setTimeout(()=>h.className='',2800);}
 function flash(ok,t){const e=document.getElementById('flash');document.getElementById('ftxt').textContent=t;e.className=ok?'fc':'fw';setTimeout(()=>e.className='',900);}
 function endSolo(won){
-  clearInterval(tid);gst='over';cok=false;
-  hideMcPanel();
+  resetSoloTransientUi();
   document.getElementById('hud').classList.remove('show');
   if(score>best)best=score;
   const ok=prog.filter(p=>p==='ok').length;
@@ -1789,7 +1826,8 @@ function nextQ(){
   const curQS=getSoloQuestionCount();
   if(qIdx>=curQS){endSolo(true);return;}
   hideAllOv();clearHov();hideMcPanel();tip.style.display='none';
-  document.getElementById('flag-display').style.display='none';
+  document.getElementById('solo-flag-display').style.display='none';
+  document.getElementById('solo-flag-img').src='';
   document.getElementById('type-wrap').style.display='none';
 
   // Pick target — skip if data missing for MC modes
@@ -1868,11 +1906,11 @@ function nextQ(){
     document.getElementById('mode-lbl').textContent=t('СТОЛИЦА ЭТОЙ СТРАНЫ?','WHAT IS THE CAPITAL?');
     if(centroids[targId]){const cd=centroids[targId].userData;rotateTo(cd.lat,cd.lng,3.5);}
   } else if(soloMode==='flag'){
-    document.getElementById('tname').textContent='???';
+    document.getElementById('tname').textContent='';
     document.getElementById('type-wrap').style.display='block';
     document.getElementById('tinput').placeholder=t('Введите название страны…','Enter country name…');
     const url=flagUrl(targId);
-    if(url){document.getElementById('flag-img').src=url;document.getElementById('flag-display').style.display='block';}
+    if(url){document.getElementById('solo-flag-img').src=url;document.getElementById('solo-flag-display').style.display='block';}
     document.getElementById('mode-lbl').textContent=t('ЧЬЙ ЭТО ФЛАГ?','WHOSE FLAG IS THIS?');
     const inp=document.getElementById('tinput');inp.value='';inp.className='';setTimeout(()=>inp.focus(),50);
   }
@@ -1888,8 +1926,8 @@ function onMcTimeout(correctAnswer){
   setOverlay(targId,0xff3344,.35);
   showHint(t('Ответ: ','Answer: ')+correctAnswer);
   flash(false,'⏱');updHUD();hideMcPanel();
-  if(lives<=0){setTimeout(()=>endSolo(false),1600);return;}
-  qIdx++;setTimeout(()=>nextQ(),2000);
+  if(lives<=0){scheduleSoloStep(()=>endSolo(false),1600);return;}
+  qIdx++;scheduleSoloStep(()=>nextQ(),2000);
 }
 
 // ═══════════════════════════════════════════════════════════════
