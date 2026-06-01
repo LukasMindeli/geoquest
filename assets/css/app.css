@@ -115,6 +115,18 @@ canvas.aim{cursor:crosshair!important;}
 .back-fixed:hover{background:rgba(0,0,0,.8)!important;}
 .sp-title{font-size:clamp(20px,3.5vw,28px);font-weight:800;margin-bottom:16px;color:#fff;}
 .sl{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:7px;}
+.flow-step{display:none;animation:fadeIn .28s ease;}
+.flow-step.flow-step-active{display:block;}
+.step-choice{
+  padding:12px 14px;
+  border:1px solid rgba(79,255,176,.22);
+  background:rgba(79,255,176,.06);
+  color:#fff;
+  font-family:'Syne',sans-serif;
+  font-size:15px;
+  font-weight:700;
+  line-height:1.35;
+}
 .mode-g{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:0;}
 .mb{padding:13px 11px;border:1px solid var(--border);background:var(--surface);color:var(--txt);font-family:'Syne',sans-serif;font-size:13px;font-weight:700;cursor:pointer;text-align:left;transition:all .2s;position:relative;}
 .mb .mi{font-size:18px;display:block;margin-bottom:5px;}
@@ -418,6 +430,50 @@ body.viewer-active #auth-bar{top:56px;}
 .mm-ring{width:60px;height:60px;border:3px solid rgba(255,204,68,.15);border-top-color:var(--gold);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 16px;}
 #mm-status{font-size:14px;font-weight:700;color:#fff;margin-bottom:20px;}
 #mm-cancel{padding:10px 24px;background:transparent;border:1px solid var(--border);color:var(--muted);font-family:'Space Mono',monospace;font-size:10px;letter-spacing:2px;cursor:pointer;}
+.mm-pulse-wrap{
+  position:relative;
+  width:112px;
+  height:112px;
+  margin:0 auto 18px;
+  display:grid;
+  place-items:center;
+}
+.mm-pulse-ring{
+  position:absolute;
+  inset:0;
+  border-radius:50%;
+  border:2px solid rgba(255,204,68,.28);
+  box-shadow:0 0 0 0 rgba(255,204,68,.2);
+  animation:mmPulse 1.2s ease-out infinite;
+}
+.mm-countdown{
+  position:relative;
+  z-index:1;
+  font-family:'Syne',sans-serif;
+  font-size:48px;
+  font-weight:800;
+  color:var(--gold);
+  line-height:1;
+}
+.mm-ready-sub{
+  font-size:18px;
+  font-weight:800;
+  color:#fff;
+  margin-bottom:8px;
+}
+.mm-ready-meta{
+  font-family:'Space Mono',monospace;
+  font-size:10px;
+  letter-spacing:2px;
+  color:var(--muted);
+  line-height:1.6;
+  min-height:32px;
+}
+@keyframes mmPulse{
+  0%{transform:scale(.92);opacity:.9;box-shadow:0 0 0 0 rgba(255,204,68,.28);}
+  70%{transform:scale(1.08);opacity:.18;box-shadow:0 0 0 18px rgba(255,204,68,0);}
+  100%{transform:scale(1.12);opacity:0;box-shadow:0 0 0 0 rgba(255,204,68,0);}
+}
 
 /* ── AUTH GATE MODAL ── */
 #auth-gate{position:fixed;inset:0;z-index:500;display:flex;align-items:center;justify-content:center;background:rgba(3,8,18,.85);backdrop-filter:blur(14px);opacity:0;pointer-events:none;transition:opacity .3s;}

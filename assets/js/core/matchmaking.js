@@ -1,13 +1,177 @@
 let mmRef = null, mmTimeout = null, mmOpponentUid = null;
+let mmMode = 'click', mmReg = 'world', mmSetupStep = 'mode';
+let mmCountdownTid = null;
+window.mmQueueRole = null;
+
+const BOT_NAMES = ['GeoMaster','WorldWizard','MapHunter','AtlasKing','GlobeRunner',
+  'CapitalPro','FlagExpert','EarthSeeker','NationBrain','TerraQuiz'];
+
+function getRegionLabel(reg) {
+  const labels = {
+    world: { ru:'🌍 Весь мир', en:'🌍 Whole World' },
+    europe: { ru:'🇪🇺 Европа', en:'🇪🇺 Europe' },
+    asia: { ru:'🌏 Азия', en:'🌏 Asia' },
+    eurasia: { ru:'🌐 Евразия', en:'🌐 Eurasia' },
+    americas: { ru:'🌎 Америка', en:'🌎 Americas' },
+    africa: { ru:'🌍 Африка', en:'🌍 Africa' },
+    oceania: { ru:'🌊 Океания', en:'🌊 Oceania' }
+  };
+  const item = labels[reg] || labels.world;
+  return t(item.ru, item.en);
+}
+
+function selectMmButtons() {
+  document.querySelectorAll('#mm-mode-step [data-mm-mode]').forEach(btn => {
+    btn.classList.toggle('sel', btn.dataset.mmMode === mmMode);
+  });
+  document.querySelectorAll('#mm-region-g .rb').forEach(btn => {
+    btn.classList.toggle('sel', btn.dataset.reg === mmReg);
+  });
+  const modeLabel = typeof getModeLabel === 'function' ? getModeLabel(mmMode) : mmMode;
+  const modeEl = document.getElementById('mm-selected-mode');
+  if(modeEl) modeEl.textContent = modeLabel;
+}
+
+function setMmSetupStep(step) {
+  mmSetupStep = step;
+  document.getElementById('mm-mode-step').classList.toggle('flow-step-active', step === 'mode');
+  document.getElementById('mm-region-step').classList.toggle('flow-step-active', step === 'region');
+  document.getElementById('mm-back-btn').textContent = step === 'mode' ? t('← Назад', '← Back') : t('← Режимы', '← Modes');
+}
+
+function showMmBox(id) {
+  ['mm-searching','mm-ready','mm-setup'].forEach(boxId => {
+    const el = document.getElementById(boxId);
+    if(el) el.style.display = boxId === id ? 'block' : 'none';
+  });
+  document.getElementById('mm-panel').classList.add('show');
+}
+
+function openRandomSetup() {
+  mmMode = 'click';
+  mmReg = 'world';
+  window.mmQueueRole = null;
+  selectMmButtons();
+  setMmSetupStep('mode');
+  showMmBox('mm-setup');
+}
+
+function clearMmCountdown() {
+  if(mmCountdownTid) clearInterval(mmCountdownTid);
+  mmCountdownTid = null;
+}
+
+function resetMmPeerState() {
+  mmOpponentUid = null;
+  if(typeof conn !== 'undefined' && conn) {
+    try { conn.close(); } catch(e) {}
+    conn = null;
+  }
+  if(typeof peer !== 'undefined' && peer) {
+    try { peer.destroy(); } catch(e) {}
+    peer = null;
+  }
+}
+
+function beginMmCountdown({ title, subtitle, meta, startAt, onDone }) {
+  clearMmCountdown();
+  const titleEl = document.getElementById('mm-ready-title');
+  const subEl = document.getElementById('mm-ready-sub');
+  const metaEl = document.getElementById('mm-ready-meta');
+  const countEl = document.getElementById('mm-countdown');
+  if(titleEl) titleEl.textContent = title;
+  if(subEl) subEl.textContent = subtitle;
+  if(metaEl) metaEl.textContent = meta || '';
+  showMmBox('mm-ready');
+
+  const tick = () => {
+    const msLeft = Math.max(0, startAt - Date.now());
+    const secondsLeft = Math.max(0, Math.ceil(msLeft / 1000));
+    if(countEl) countEl.textContent = String(secondsLeft);
+    if(msLeft <= 0) {
+      clearMmCountdown();
+      document.getElementById('mm-panel').classList.remove('show');
+      onDone?.();
+    }
+  };
+
+  tick();
+  mmCountdownTid = setInterval(tick, 120);
+}
+
+function beginRandomMatchStart(payload, amHost) {
+  soloMode = payload.mode || mmMode;
+  mpReg = payload.reg || mmReg;
+  mpPool = (payload.pool || []).map(id => ({ id, name: COUNTRIES[id]?.n || String(id) }));
+  const myName = amHost ? (payload.hostName || t('Игрок','Player')) : (payload.guestName || (currentUser?.displayName || profileData.name || t('Игрок','Player')));
+  const oppName = amHost ? (payload.guestName || t('Соперник','Opponent')) : (payload.hostName || t('Соперник','Opponent'));
+  const startAt = payload.startAt || (Date.now() + (payload.countdownMs || 5000));
+  beginMmCountdown({
+    title: t('Соперник найден','Opponent found'),
+    subtitle: t('Приготовься! Матч начинается…','Get ready! Match starts…'),
+    meta: `${typeof getModeLabel === 'function' ? getModeLabel(soloMode) : soloMode} • ${getRegionLabel(mpReg)}`,
+    startAt,
+    onDone: () => startMpGame(amHost, { myName, oppName })
+  });
+}
+
+function startRandomMatchAsHost() {
+  if(mmRef) {
+    mmRef.off();
+    try { mmRef.remove(); } catch(e) {}
+    mmRef = null;
+  }
+  window.mmQueueRole = null;
+  const hostName = currentUser ? (currentUser.displayName || profileData.name || t('Игрок','Player')) : (profileData.name || t('Игрок','Player'));
+  const startAt = Date.now() + 5000;
+  let pool = shuffled(rpool(mmReg)).map(c => c.id);
+  if(pool.length < 2) {
+    mmReg = 'world';
+    pool = shuffled(rpool(mmReg)).map(c => c.id);
+  }
+  const payload = {
+    type: 'start',
+    reg: mmReg,
+    mode: mmMode,
+    pool,
+    startAt,
+    countdownMs: 5000,
+    randomQueue: true,
+    hostName
+  };
+  isHost = true;
+  send(payload);
+  beginRandomMatchStart({ ...payload, startAt }, true);
+}
+
+function startRandomBotFallback() {
+  resetMmPeerState();
+  if(mmRef) {
+    mmRef.off();
+    try { mmRef.remove(); } catch(e) {}
+    mmRef = null;
+  }
+  window.mmQueueRole = null;
+  const botName = BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)];
+  const startAt = Date.now() + 5000;
+  beginMmCountdown({
+    title: t('Соперник найден','Opponent found'),
+    subtitle: t('Нашли соперника. Приготовься!','Opponent locked in. Get ready!'),
+    meta: `${botName} • ${typeof getModeLabel === 'function' ? getModeLabel(mmMode) : mmMode} • ${getRegionLabel(mmReg)}`,
+    startAt,
+    onDone: () => startBotMatch(botName, mmReg, mmMode)
+  });
+}
 
 function startMatchmaking() {
-  if(!db) { startBotMatch(); return; }
+  soloMode = mmMode;
+  if(!db) { startRandomBotFallback(); return; }
   const uid = currentUser ? currentUser.uid : ('guest_'+Math.random().toString(36).substr(2,8));
   const name = currentUser ? (currentUser.displayName||'Игрок') : (profileData.name||'Гость');
-  const mmSlot = { uid, name, ts: Date.now(), peerId: null, mode: mmMode };
+  const mmSlot = { uid, name, ts: Date.now(), peerId: null, mode: mmMode, reg: mmReg };
 
-  document.getElementById('mm-status').textContent = 'Ищем соперника…';
-  document.getElementById('mm-panel').classList.add('show');
+  document.getElementById('mm-status').textContent = t('Ищем соперника…','Searching for an opponent…');
+  showMmBox('mm-searching');
 
   // Check for waiting player
   db.ref('matchmaking').orderByChild('ts').limitToLast(5).once('value', snap => {
@@ -15,7 +179,7 @@ function startMatchmaking() {
     if(snap.exists()) {
       snap.forEach(c => {
         const d = c.val();
-        if(d.uid !== uid && Date.now() - d.ts < 15000 && !d.matched) {
+        if(d.uid !== uid && Date.now() - d.ts < 15000 && !d.matched && d.peerId && d.mode === mmMode && d.reg === mmReg) {
           found = { key: c.key, data: d };
         }
       });
@@ -23,12 +187,11 @@ function startMatchmaking() {
 
     if(found) {
       // Join existing slot
+      window.mmQueueRole = 'guest';
       db.ref('matchmaking/' + found.key).update({ matched: uid });
       mmOpponentUid = found.data.uid;
-      document.getElementById('mm-status').textContent = `Соперник найден: ${found.data.name}!`;
+      document.getElementById('mm-status').textContent = t('Соперник найден. Подключаемся…','Opponent found. Connecting…');
       setTimeout(() => {
-        document.getElementById('mm-panel').classList.remove('show');
-        // Start real multiplayer (guest joins)
         isHost = false;
         mpMyName = name;
         mpOppName = found.data.name;
@@ -37,6 +200,7 @@ function startMatchmaking() {
       clearTimeout(mmTimeout);
     } else {
       // Create slot and wait
+      window.mmQueueRole = 'host';
       const newRef = db.ref('matchmaking').push(mmSlot);
       mmRef = newRef;
 
@@ -48,8 +212,7 @@ function startMatchmaking() {
       mmTimeout = setTimeout(() => {
         // No one joined — start bot match
         newRef.remove();
-        document.getElementById('mm-panel').classList.remove('show');
-        startBotMatch();
+        startRandomBotFallback();
       }, 10000);
 
       // Listen for someone joining
@@ -58,11 +221,7 @@ function startMatchmaking() {
           clearTimeout(mmTimeout);
           newRef.off();
           mmOpponentUid = s.val().matched;
-          document.getElementById('mm-status').textContent = 'Соперник найден!';
-          setTimeout(() => {
-            document.getElementById('mm-panel').classList.remove('show');
-            // Already hosting via initPeer
-          }, 800);
+          document.getElementById('mm-status').textContent = t('Соперник найден. Готовим матч…','Opponent found. Preparing match…');
         }
       });
     }
@@ -72,15 +231,18 @@ function startMatchmaking() {
 // ── BOT MATCH ─────────────────────────────────────────────────
 let botActive = false, botTid = null;
 
-function startBotMatch() {
-  // Bot names pool
-  const botNames = ['GeoMaster','WorldWizard','MapHunter','AtlasKing','GlobeRunner',
-    'CapitalPro','FlagExpert','EarthSeeker','NationBrain','TerraQuiz'];
+function startBotMatch(botName = null, region = 'world', mode = mmMode) {
   botActive = true;
+  soloMode = mode;
   mpMyName = currentUser ? (currentUser.displayName||'Ты') : (profileData.name||'Ты');
-  mpOppName = botNames[Math.floor(Math.random()*botNames.length)];
+  mpOppName = botName || BOT_NAMES[Math.floor(Math.random()*BOT_NAMES.length)];
   mpMyScore = 0; mpOppScore = 0; mpRound = 0;
-  mpPool = shuffled(rpool('world'));
+  mpReg = region;
+  mpPool = shuffled(rpool(region));
+  if(mpPool.length < 2) {
+    mpReg = 'world';
+    mpPool = shuffled(rpool('world'));
+  }
   document.getElementById('mps-n1').textContent = mpMyName;
   document.getElementById('mps-n2').textContent = mpOppName;
   showScreen('mp');
@@ -158,34 +320,38 @@ function onBotClick(cid) {
 // ═══════════════════════════════════════════════════════════════
 
 document.getElementById('btn-random').addEventListener('click',()=>{
-  if(!currentUser){showAuthGate('online',()=>{
-    document.getElementById('mm-panel').classList.add('show');
-    document.getElementById('mm-setup').style.display='block';
-    document.getElementById('mm-searching').style.display='none';
-  });return;}
-  document.getElementById('mm-panel').classList.add('show');
-  document.getElementById('mm-setup').style.display='block';
-  document.getElementById('mm-searching').style.display='none';
+  if(!currentUser){showAuthGate('online',()=>{openRandomSetup();},'online');return;}
+  openRandomSetup();
 });
 
 function cancelMatchmaking(){
+  clearMmCountdown();
+  window.mmQueueRole = null;
   clearTimeout(mmTimeout);
   if(mmRef){mmRef.off();try{mmRef.remove();}catch(e){}}
+  mmRef = null;
+  resetMmPeerState();
   document.getElementById('mm-panel').classList.remove('show');
   document.getElementById('mm-setup').style.display='block';
   document.getElementById('mm-searching').style.display='none';
+  document.getElementById('mm-ready').style.display='none';
   document.getElementById('main-menu').classList.add('show');
 }
 
 // MM mode selection
-let mmMode='click';
-document.querySelectorAll('[data-mm-mode]').forEach(b=>b.addEventListener('click',()=>{
-  document.querySelectorAll('[data-mm-mode]').forEach(x=>x.classList.remove('sel'));
-  b.classList.add('sel'); mmMode=b.dataset.mmMode;
-  soloMode=mmMode; // sync so nextQ uses correct mode for bot
+document.querySelectorAll('#mm-mode-step [data-mm-mode]').forEach(b=>b.addEventListener('click',()=>{
+  mmMode=b.dataset.mmMode;
+  selectMmButtons();
+  setMmSetupStep('region');
+}));
+
+document.querySelectorAll('#mm-region-g .rb').forEach(b=>b.addEventListener('click',()=>{
+  mmReg=b.dataset.reg;
+  selectMmButtons();
 }));
 
 document.getElementById('mm-back-btn').addEventListener('click',()=>{
+  if(mmSetupStep==='region'){setMmSetupStep('mode');return;}
   document.getElementById('mm-panel').classList.remove('show');
   document.getElementById('main-menu').classList.add('show');
 });

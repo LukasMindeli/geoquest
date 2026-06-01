@@ -67,27 +67,52 @@
     <div id="mm-status">Ищем соперника…</div>
     <button id="mm-cancel" onclick="cancelMatchmaking()">← Отмена</button>
   </div>
+  <div class="mm-box" id="mm-ready" style="display:none">
+    <div class="mm-title" id="mm-ready-title">СОПЕРНИК НАЙДЕН</div>
+    <div class="mm-pulse-wrap">
+      <div class="mm-pulse-ring"></div>
+      <div class="mm-countdown" id="mm-countdown">5</div>
+    </div>
+    <div class="mm-ready-sub" id="mm-ready-sub">Приготовься! Матч начинается…</div>
+    <div class="mm-ready-meta" id="mm-ready-meta"></div>
+  </div>
   <div class="mm-box" id="mm-setup" style="display:block">
     <button class="sp-back" id="mm-back-btn" style="margin-bottom:16px">← Назад</button>
     <div class="mm-title">СЛУЧАЙНЫЙ СОПЕРНИК</div>
-    <div style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--muted);margin-bottom:16px">ВЫБЕРИ РЕЖИМ</div>
-    <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:20px">
-      <button class="mode-pill sel" data-mm-mode="click">🖱️ Найди страну</button>
-      <button class="mode-pill" data-mm-mode="type">⌨️ Угадай название</button>
-      <button class="mode-pill" data-mm-mode="capital">🏛️ Угадай столицу</button>
-      <button class="mode-pill" data-mm-mode="flag">🚩 Угадай флаг</button>
-      <button class="mode-pill" data-mm-mode="landmark">🗺️ Достопримечательности</button>
-      <button class="mode-pill" data-mm-mode="leader">👑 Лидер страны</button>
-      <button class="mode-pill" data-mm-mode="religion">🕌 Религия</button>
+    <div id="mm-mode-step" class="flow-step flow-step-active">
+      <div style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--muted);margin-bottom:16px">ВЫБЕРИ РЕЖИМ</div>
+      <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:20px">
+        <button class="mode-pill sel" data-mm-mode="click">🖱️ Найди страну</button>
+        <button class="mode-pill" data-mm-mode="type">⌨️ Угадай название</button>
+        <button class="mode-pill" data-mm-mode="capital">🏛️ Угадай столицу</button>
+        <button class="mode-pill" data-mm-mode="flag">🚩 Угадай флаг</button>
+        <button class="mode-pill" data-mm-mode="landmark">🗺️ Достопримечательности</button>
+        <button class="mode-pill" data-mm-mode="leader">👑 Лидер страны</button>
+        <button class="mode-pill" data-mm-mode="religion">🕌 Религия</button>
+      </div>
     </div>
-    <button class="pb gold" id="mm-start-btn">🎲 Найти соперника</button>
+    <div id="mm-region-step" class="flow-step">
+      <div class="sl">Режим</div>
+      <div class="step-choice" id="mm-selected-mode">🖱️ Найди страну</div>
+      <div class="sl" style="margin-top:14px">Выбери регион</div>
+      <div class="reg-g" id="mm-region-g">
+        <button class="rb sel" data-reg="world">🌍 Весь мир</button>
+        <button class="rb" data-reg="europe">🇪🇺 Европа</button>
+        <button class="rb" data-reg="asia">🌏 Азия</button>
+        <button class="rb" data-reg="eurasia">🌐 Евразия</button>
+        <button class="rb" data-reg="americas">🌎 Америка</button>
+        <button class="rb" data-reg="africa">🌍 Африка</button>
+        <button class="rb" data-reg="oceania">🌊 Океания</button>
+      </div>
+      <button class="pb gold" id="mm-start-btn" style="margin-top:16px">🎲 Найти соперника</button>
+    </div>
   </div>
 </div>
 
 <!-- MAIN MENU -->
 <div id="main-menu">
   <div class="mm-panel">
-    <div class="logo">GeoQuest</div>
+    <div class="logo">worldorwrong</div>
     <div class="big-title">Найди<br><span>страну</span></div>
     <div class="mm-grid">
       <button class="mm-btn" id="btn-solo">
@@ -142,44 +167,51 @@
     <button class="sp-back" id="sp-back">← Назад</button>
     <div class="sp-title">Одиночная игра</div>
 
-    <!-- Step 1: Mode -->
-    <div class="sl" id="sl-mode">Выбери режим</div>
-    <div style="display:flex;flex-direction:column;gap:8px">
-      <button class="mode-pill sel" data-mode="click">🖱️ Найди и кликни</button>
-      <button class="mode-pill" data-mode="type">⌨️ Угадай название</button>
-      <button class="mode-pill" data-mode="capital">🏛️ Угадай столицу</button>
-      <button class="mode-pill" data-mode="flag">🚩 Угадай флаг</button>
-      <button class="mode-pill" data-mode="landmark">🗺️ Угадай достопримечательность</button>
-      <button class="mode-pill" data-mode="leader">👑 Угадай лидера страны</button>
-      <button class="mode-pill" data-mode="religion">🕌 Угадай религию</button>
-    </div>
-
-    <!-- Step 2: Difficulty (only for normal modes) -->
-    <div id="solo-diff-wrap" style="display:none;animation:fadeIn .3s ease">
-      <div class="sl" style="margin-top:14px">Уровень сложности</div>
-      <div class="diff-g">
-        <button class="diff-btn sel" data-diff="easy">🟢 Лёгкий<br><span style="font-size:8px;opacity:.6">10 вопросов</span></button>
-        <button class="diff-btn" data-diff="medium">🟡 Средний<br><span style="font-size:8px;opacity:.6">15 вопросов</span></button>
-        <button class="diff-btn" data-diff="hard">🔴 Сложный<br><span style="font-size:8px;opacity:.6">20 вопросов</span></button>
+    <div id="solo-mode-step" class="flow-step flow-step-active">
+      <div class="sl" id="sl-mode">Выбери режим</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <button class="mode-pill sel" data-mode="click">🖱️ Найди и кликни</button>
+        <button class="mode-pill" data-mode="type">⌨️ Угадай название</button>
+        <button class="mode-pill" data-mode="capital">🏛️ Угадай столицу</button>
+        <button class="mode-pill" data-mode="flag">🚩 Угадай флаг</button>
+        <button class="mode-pill" data-mode="landmark">🗺️ Угадай достопримечательность</button>
+        <button class="mode-pill" data-mode="leader">👑 Угадай лидера страны</button>
+        <button class="mode-pill" data-mode="religion">🕌 Угадай религию</button>
       </div>
     </div>
 
-    <!-- Step 3: Region -->
-    <div id="solo-region-wrap" style="display:none;animation:fadeIn .3s ease">
-      <div class="sl" style="margin-top:14px">Выбери регион</div>
-      <div class="reg-g">
-        <button class="rb sel" data-reg="world">🌍 Весь мир</button>
-        <button class="rb" data-reg="europe">🇪🇺 Европа</button>
-        <button class="rb" data-reg="asia">🌏 Азия</button>
-        <button class="rb" data-reg="americas">🌎 Америка</button>
-        <button class="rb" data-reg="africa">🌍 Африка</button>
-        <button class="rb" data-reg="oceania">🌊 Океания</button>
-      </div>
-    </div>
+    <div id="solo-details-step" class="flow-step">
+      <div class="sl">Режим</div>
+      <div class="step-choice" id="solo-selected-mode">🖱️ Найди и кликни</div>
 
-    <!-- Step 4: Start -->
-    <div id="solo-start-wrap" style="display:none;animation:fadeIn .3s ease;margin-top:14px">
-      <button class="pb" id="solo-play-btn">▶ Начать игру</button>
+      <!-- Step 2: Difficulty (only for normal modes) -->
+      <div id="solo-diff-wrap" style="display:block;animation:fadeIn .3s ease">
+        <div class="sl" style="margin-top:14px">Уровень сложности</div>
+        <div class="diff-g">
+          <button class="diff-btn sel" data-diff="easy">🟢 Лёгкий<br><span style="font-size:8px;opacity:.6">10 вопросов</span></button>
+          <button class="diff-btn" data-diff="medium">🟡 Средний<br><span style="font-size:8px;opacity:.6">15 вопросов</span></button>
+          <button class="diff-btn" data-diff="hard">🔴 Сложный<br><span style="font-size:8px;opacity:.6">20 вопросов</span></button>
+        </div>
+      </div>
+
+      <!-- Step 3: Region -->
+      <div id="solo-region-wrap" style="display:block;animation:fadeIn .3s ease">
+        <div class="sl" style="margin-top:14px">Выбери регион</div>
+        <div class="reg-g" id="solo-region-g">
+          <button class="rb sel" data-reg="world">🌍 Весь мир</button>
+          <button class="rb" data-reg="europe">🇪🇺 Европа</button>
+          <button class="rb" data-reg="asia">🌏 Азия</button>
+          <button class="rb" data-reg="eurasia">🌐 Евразия</button>
+          <button class="rb" data-reg="americas">🌎 Америка</button>
+          <button class="rb" data-reg="africa">🌍 Африка</button>
+          <button class="rb" data-reg="oceania">🌊 Океания</button>
+        </div>
+      </div>
+
+      <!-- Step 4: Start -->
+      <div id="solo-start-wrap" style="display:block;animation:fadeIn .3s ease;margin-top:14px">
+        <button class="pb" id="solo-play-btn">▶ Начать игру</button>
+      </div>
     </div>
   </div>
 </div>
@@ -226,6 +258,7 @@
           <button class="rb sel" data-reg="world">🌍 Весь мир</button>
           <button class="rb" data-reg="europe">🇪🇺 Европа</button>
           <button class="rb" data-reg="asia">🌏 Азия</button>
+          <button class="rb" data-reg="eurasia">🌐 Евразия</button>
           <button class="rb" data-reg="americas">🌎 Америка</button>
           <button class="rb" data-reg="africa">🌍 Африка</button>
           <button class="rb" data-reg="oceania">🌊 Океания</button>
@@ -766,7 +799,28 @@ let gst='menu',soloMode='click',soloReg='world';
 let activePool=[],score=0,lives=LIVES,streak=0,qIdx=0,targId=null;
 let timeLeft=0,tid=null,cok=false,prog=[],best=0;
 
-function rpool(reg){return Object.entries(COUNTRIES).filter(([id,c])=>reg==='world'||c.r===reg).filter(([id])=>soloMode!=='capital'||CAPITALS[+id]).map(([id,c])=>({id:parseInt(id),name:cName(parseInt(id))}));}
+const MODE_LABELS = {
+  click:{ru:'🖱️ Найди страну', en:'🖱️ Find the country'},
+  type:{ru:'⌨️ Угадай название', en:'⌨️ Guess the name'},
+  capital:{ru:'🏛️ Угадай столицу', en:'🏛️ Guess the capital'},
+  flag:{ru:'🚩 Угадай флаг', en:'🚩 Guess the flag'},
+  landmark:{ru:'🗺️ Достопримечательности', en:'🗺️ Landmarks'},
+  leader:{ru:'👑 Лидер страны', en:'👑 Country leader'},
+  religion:{ru:'🕌 Религия', en:'🕌 Religion'}
+};
+
+function getModeLabel(mode){
+  const cfg = MODE_LABELS[mode] || MODE_LABELS.click;
+  return t(cfg.ru, cfg.en);
+}
+
+function regionMatches(country, reg){
+  if(reg==='world') return true;
+  if(reg==='eurasia') return country.r==='europe' || country.r==='asia';
+  return country.r===reg;
+}
+
+function rpool(reg){return Object.entries(COUNTRIES).filter(([id,c])=>regionMatches(c, reg)).filter(([id])=>soloMode!=='capital'||CAPITALS[+id]).map(([id,c])=>({id:parseInt(id),name:cName(parseInt(id))}));}
 function shuffled(a){return[...a].sort(()=>Math.random()-.5);}
 
 function startSolo(){
@@ -825,10 +879,11 @@ document.getElementById('tinput').addEventListener('keydown',e=>{
   }
 });
 function sGood(){
+  const curQS=(typeof soloDiff!=='undefined'&&DIFF_QS[soloDiff])?DIFF_QS[soloDiff]:QS;
   const b=timeLeft*6+streak*15;score+=120+b;streak++;
   profileData.maxStreak=Math.max(profileData.maxStreak||0,streak);
   prog[qIdx]='ok';setOverlay(targId,0x00ee77,.4);flash(true,'✓');updHUD();
-  qIdx++;if(qIdx>=QS)setTimeout(()=>endSolo(true),1100);else setTimeout(()=>nextQ(),1100);
+  qIdx++;if(qIdx>=curQS)setTimeout(()=>endSolo(true),1100);else setTimeout(()=>nextQ(),1100);
 }
 function sBad(nm){
   lives--;streak=0;profileData.flagStreak=0;prog[qIdx]='bad';
@@ -907,14 +962,28 @@ function initPeer(id){
   });
   peer.on('connection',c=>{
     conn=c;setupConn();
+    if(window.mmQueueRole==='host' && document.getElementById('mm-panel').classList.contains('show') && document.getElementById('mm-searching').style.display === 'block'){
+      setMpStatus('ok','✓ Соперник подключился!');
+      document.getElementById('mp-host-ready').textContent='Подготовка матча…';
+      return;
+    }
     setMpStatus('ok','✓ Соперник подключился!');
     document.getElementById('mp-host-ready').textContent='Начать игру';
     document.getElementById('mp-host-ready').onclick=()=>{
       mpReg=document.querySelector('#mp-reg-g .rb.sel').dataset.reg;
       mpPool=shuffled(rpool(mpReg));
       isHost=true;mpMyScore=0;mpOppScore=0;mpRound=0;
-      send({type:'start',reg:mpReg,pool:mpPool.map(c=>c.id)});
-      startMpGame(true);
+      send({
+        type:'start',
+        reg:mpReg,
+        pool:mpPool.map(c=>c.id),
+        hostName: currentUser?.displayName || profileData.name || 'Хозяин',
+        guestName: 'Гость'
+      });
+      startMpGame(true, {
+        myName: currentUser?.displayName || profileData.name || 'Хозяин',
+        oppName: 'Гость'
+      });
     };
   });
   peer.on('error',e=>setMpStatus('err','Ошибка: '+e.message));
@@ -933,7 +1002,13 @@ function joinPeer(code){
 
 function setupConn(){
   conn.on('data',onMpData);
-  conn.on('open',()=>{if(!isHost)setMpStatus('ok','✓ Подключено!');});
+  conn.on('open',()=>{
+    if(window.mmQueueRole==='host' && document.getElementById('mm-panel').classList.contains('show') && document.getElementById('mm-searching').style.display === 'block'){
+      startRandomMatchAsHost();
+      return;
+    }
+    if(!isHost)setMpStatus('ok','✓ Подключено!');
+  });
   conn.on('close',()=>{if(currentScreen==='mp')setMpStatus('err','Соперник отключился');});
 }
 
@@ -943,7 +1018,14 @@ function onMpData(data){
   if(data.type==='start'){
     mpPool=data.pool.map(id=>({id,name:COUNTRIES[id].n}));
     mpReg=data.reg;isHost=false;mpMyScore=0;mpOppScore=0;mpRound=0;
-    startMpGame(false);
+    if(data.randomQueue && (data.startAt || data.countdownMs)){
+      beginRandomMatchStart(data, false);
+      return;
+    }
+    startMpGame(false, {
+      myName: data.guestName || 'Гость',
+      oppName: data.hostName || 'Хозяин'
+    });
   } else if(data.type==='challenge'){
     // Host sends challenge to guest (finder)
     mpSelName=data.name;
@@ -967,12 +1049,13 @@ function onMpData(data){
   }
 }
 
-function startMpGame(amHost){
+function startMpGame(amHost, meta = {}){
+  window.mmQueueRole = null;
   showScreen('mp');
   document.getElementById('mp-game').classList.add('show');
   mpRound=0;mpMyScore=0;mpOppScore=0;
-  mpMyName=amHost?'Хозяин':'Гость';
-  mpOppName=amHost?'Гость':'Хозяин';
+  mpMyName=meta.myName || (amHost?'Хозяин':'Гость');
+  mpOppName=meta.oppName || (amHost?'Гость':'Хозяин');
   document.getElementById('mps-n1').textContent=mpMyName;
   document.getElementById('mps-n2').textContent=mpOppName;
   document.getElementById('mp-lobby').classList.remove('show');
@@ -1121,7 +1204,7 @@ function setMpStatus(cls,html){const s=document.getElementById('mp-status');s.cl
 // ═══════════════════════════════════════════════════════════════
 
 // Main menu
-document.getElementById('btn-solo').addEventListener('click',()=>{showScreen('solo-setup');document.getElementById('solo-setup').classList.add('show');});
+document.getElementById('btn-solo').addEventListener('click',openSoloSetup);
 document.getElementById('btn-viewer').addEventListener('click',()=>{showScreen('viewer');document.getElementById('viewer-bar').classList.add('show');showLabels=true;});
 document.getElementById('btn-multi').addEventListener('click',()=>{
   if(!currentUser){showAuthGate('online',()=>{
@@ -1139,32 +1222,57 @@ document.getElementById('btn-daily').addEventListener('click',openDaily);
 document.getElementById('btn-ach').addEventListener('click',()=>{renderAchievements();document.getElementById('panel-ach').classList.add('show');});
 document.getElementById('btn-lb').addEventListener('click',openLB);
 // Solo setup
-document.getElementById('sp-back').addEventListener('click',()=>{showScreen('menu');document.getElementById('main-menu').classList.add('show');});
+let soloSetupStep='mode';
+function selectButtonInGroup(selector, value, attr){
+  document.querySelectorAll(selector).forEach(btn => btn.classList.toggle('sel', btn.dataset[attr]===value));
+}
+function setSoloSetupStep(step){
+  soloSetupStep=step;
+  document.getElementById('solo-mode-step').classList.toggle('flow-step-active',step==='mode');
+  document.getElementById('solo-details-step').classList.toggle('flow-step-active',step==='details');
+  document.getElementById('sp-back').textContent=step==='mode'?t('← Назад','← Back'):t('← Режимы','← Modes');
+}
+function syncSoloSetupUI(){
+  selectButtonInGroup('#solo-mode-step [data-mode]', soloMode, 'mode');
+  selectButtonInGroup('#solo-region-g .rb', soloReg, 'reg');
+  selectButtonInGroup('#solo-details-step .diff-btn', soloDiff, 'diff');
+  document.getElementById('solo-selected-mode').textContent=getModeLabel(soloMode);
+}
+function openSoloSetup(){
+  soloMode='click';
+  soloReg='world';
+  soloDiff='easy';
+  syncSoloSetupUI();
+  setSoloSetupStep('mode');
+  showScreen('solo-setup');
+  document.getElementById('solo-setup').classList.add('show');
+}
+document.getElementById('sp-back').addEventListener('click',()=>{
+  if(soloSetupStep==='details'){setSoloSetupStep('mode');return;}
+  showScreen('menu');document.getElementById('main-menu').classList.add('show');
+});
 // ── SOLO SETUP CASCADE ──────────────────────────────────────────
 let soloDiff = 'easy';
 const DIFF_QS = {easy:10, medium:15, hard:20};
 
 // Mode pill click
-document.querySelectorAll('.mode-pill').forEach(b => {
+document.querySelectorAll('#solo-mode-step [data-mode]').forEach(b => {
   b.addEventListener('click', () => {
-    document.querySelectorAll('.mode-pill').forEach(x => x.classList.remove('sel'));
-    b.classList.add('sel');
     soloMode = b.dataset.mode;
-    document.getElementById('solo-diff-wrap').style.display = 'block';
-    document.getElementById('solo-region-wrap').style.display = 'block';
-    document.getElementById('solo-start-wrap').style.display = 'block';
+    syncSoloSetupUI();
+    setSoloSetupStep('details');
   });
 });
 
 // Difficulty
 document.querySelectorAll('.diff-btn').forEach(b => b.addEventListener('click', () => {
-  document.querySelectorAll('.diff-btn').forEach(x => x.classList.remove('sel'));
-  b.classList.add('sel'); soloDiff = b.dataset.diff;
+  soloDiff = b.dataset.diff;
+  syncSoloSetupUI();
 }));
 
-document.querySelectorAll('#solo-setup .rb').forEach(b => b.addEventListener('click', () => {
-  document.querySelectorAll('#solo-setup .rb').forEach(x => x.classList.remove('sel'));
-  b.classList.add('sel'); soloReg = b.dataset.reg;
+document.querySelectorAll('#solo-region-g .rb').forEach(b => b.addEventListener('click', () => {
+  soloReg = b.dataset.reg;
+  syncSoloSetupUI();
 }));
 
 document.getElementById('solo-play-btn').addEventListener('click', startSolo);
@@ -1595,6 +1703,8 @@ function toggleLang(){
   Object.entries(labelEls).forEach(([id,el])=>{
     el.textContent=cName(parseInt(id));
   });
+  if(typeof syncSoloSetupUI==='function') syncSoloSetupUI();
+  if(typeof selectMmButtons==='function') selectMmButtons();
   if(typeof refreshDailyUI==='function') refreshDailyUI();
   if(typeof refreshAuthUI==='function') refreshAuthUI();
 }
