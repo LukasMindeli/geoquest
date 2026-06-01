@@ -881,11 +881,19 @@ function rpool(reg,mode=soloMode){
 }
 function shuffled(a){return[...a].sort(()=>Math.random()-.5);}
 
+function getRequestedSoloQuestionCount(){
+  return (typeof soloDiff!=='undefined' && DIFF_QS[soloDiff]) ? DIFF_QS[soloDiff] : QS;
+}
+
+function getSoloQuestionCount(){
+  return prog.length || getRequestedSoloQuestionCount();
+}
+
 function startSolo(){
-  const curQS = (typeof soloDiff!=='undefined' && DIFF_QS[soloDiff]) ? DIFF_QS[soloDiff] : QS;
-  score=0;lives=LIVES;streak=0;qIdx=0;prog=new Array(curQS).fill(null);
-  activePool=shuffled(rpool(soloReg));
+  const curQS = getRequestedSoloQuestionCount();
+  activePool=shuffled(rpool(soloReg,soloMode));
   if(activePool.length<2){alert(t('В этом регионе слишком мало стран!','Not enough countries in this region!'));return;}
+  score=0;lives=LIVES;streak=0;qIdx=0;prog=new Array(Math.min(curQS,activePool.length)).fill(null);
   showScreen('solo');
   document.getElementById('hud').classList.add('show');
   document.getElementById('type-wrap').style.display=(soloMode==='type'||soloMode==='capital')?'block':'none';
@@ -894,8 +902,8 @@ function startSolo(){
   buildDots();updHUD();nextQ();
 }
 
-function buildDots(){const curQS=(typeof soloDiff!=='undefined'&&DIFF_QS[soloDiff])?DIFF_QS[soloDiff]:QS;const d=document.getElementById('dots');d.innerHTML='';for(let i=0;i<curQS;i++){const e=document.createElement('div');e.className='dot';e.id='d'+i;d.appendChild(e);}}
-function syncDots(){const curQS=(typeof soloDiff!=='undefined'&&DIFF_QS[soloDiff])?DIFF_QS[soloDiff]:QS;for(let i=0;i<curQS;i++){const d=document.getElementById('d'+i);if(!d)continue;d.className='dot';if(i<qIdx)d.classList.add(prog[i]==='ok'?'ok':'bad');else if(i===qIdx)d.classList.add('cur');}}
+function buildDots(){const curQS=getSoloQuestionCount();const d=document.getElementById('dots');d.innerHTML='';for(let i=0;i<curQS;i++){const e=document.createElement('div');e.className='dot';e.id='d'+i;d.appendChild(e);}}
+function syncDots(){const curQS=getSoloQuestionCount();for(let i=0;i<curQS;i++){const d=document.getElementById('d'+i);if(!d)continue;d.className='dot';if(i<qIdx)d.classList.add(prog[i]==='ok'?'ok':'bad');else if(i===qIdx)d.classList.add('cur');}}
 
 function syncTimer(T){document.getElementById('tv').textContent=timeLeft;document.getElementById('tb').style.width=(timeLeft/T*100)+'%';document.getElementById('tb').className=timeLeft<=5?'hot':'';}
 function updHUD(){document.getElementById('sc').textContent=score.toLocaleString();document.getElementById('stk').textContent='×'+Math.max(1,streak);document.getElementById('lv').textContent='❤'.repeat(lives)+'♡'.repeat(Math.max(0,LIVES-lives));syncDots();}
@@ -948,7 +956,7 @@ document.getElementById('tinput').addEventListener('keydown',e=>{
   }
 });
 function sGood(){
-  const curQS=(typeof soloDiff!=='undefined'&&DIFF_QS[soloDiff])?DIFF_QS[soloDiff]:QS;
+  const curQS=getSoloQuestionCount();
   const b=timeLeft*6+streak*15;score+=120+b;streak++;
   profileData.maxStreak=Math.max(profileData.maxStreak||0,streak);
   prog[qIdx]='ok';setOverlay(targId,0x00ee77,.4);flash(true,'✓');updHUD();
@@ -979,7 +987,7 @@ function endSolo(won){
   const ok=prog.filter(p=>p==='ok').length;
   document.getElementById('rt').textContent=won?'🌍 Миссия выполнена!':'Игра окончена';
   document.getElementById('rscore').textContent=score.toLocaleString();
-  const _curQS=(typeof soloDiff!=='undefined'&&typeof DIFF_QS!=='undefined'&&DIFF_QS[soloDiff])?DIFF_QS[soloDiff]:QS;
+  const _curQS=getSoloQuestionCount();
   document.getElementById('rstats').textContent=ok+' / '+_curQS+' '+t('стран','countries')+' · '+getRegionPlainLabel(soloReg);
   document.getElementById('rbest').textContent=best>score?'Рекорд: '+best.toLocaleString():(best>0?'🏆 Новый рекорд!':'');
   document.getElementById('result').classList.add('show');
@@ -1150,6 +1158,28 @@ function startMpSelectingRound(opts={}){
   document.getElementById('mp-tb').style.width='100%';
 }
 
+function showMpInvalidSelection(mode){
+  flash(false,'!');
+  document.getElementById('mp-confirm').style.display='none';
+  document.getElementById('mp-sel-hint').textContent=t('Для этого режима выбери другую страну','Choose another country for this mode');
+}
+
+function handleUnsupportedMpChallenge(targetId,mode,name){
+  const nm=name||cName(targetId);
+  resetMpQuestionUi();
+  mpState='done';
+  document.getElementById('mp-role').textContent=t('РЕЖИМ: ВОПРОС НЕДОСТУПЕН','MODE: QUESTION UNAVAILABLE');
+  setMpInstructionText(t('Для этой страны вопрос недоступен','This question is unavailable for this country'));
+  document.getElementById('mp-sel-hint').textContent=`${nm} • ${t('переходим дальше','skipping this round')}`;
+  flash(false,'!');
+  if(typeof botActive!=='undefined'&&botActive){
+    scheduleMpStep(()=>nextBotRound(),900);
+  }else{
+    send({type:'timeout'});
+    scheduleMpStep(()=>{mpRound++;nextMpRound();},900);
+  }
+}
+
 function startMpFindingRound(targetId,mode,name,handlers={}){
   mpFindTargetId=parseInt(targetId,10);
   mpFindMode=mode||soloMode||'click';
@@ -1159,6 +1189,10 @@ function startMpFindingRound(targetId,mode,name,handlers={}){
   resetMpQuestionUi();
 
   const nm=name||cName(mpFindTargetId);
+  if(!modeSupportsCountry(mpFindMode,mpFindTargetId)){
+    handleUnsupportedMpChallenge(mpFindTargetId,mpFindMode,nm);
+    return;
+  }
   if(mpFindMode==='click'){
     document.getElementById('mp-role').textContent=t('РЕЖИМ: ИЩЕШЬ СТРАНУ','MODE: FIND THE COUNTRY');
     setMpInstructionText(nm.toUpperCase());
@@ -1439,6 +1473,10 @@ function mpClick(cid){
   if(currentScreen!=='mp')return;
   if(mpState==='selecting'){
     // Selector chose a country
+    if(!modeSupportsCountry(soloMode,cid)){
+      showMpInvalidSelection(soloMode);
+      return;
+    }
     if(mpSelHighlight!==null&&mpSelHighlight!==cid)hideOv(mpSelHighlight);
     mpSelId=cid;mpSelHighlight=cid;
     const nm=cName(cid);
@@ -1460,6 +1498,10 @@ function mpClick(cid){
 }
 
 function confirmChallenge(cid,nm,mode=soloMode){
+  if(!modeSupportsCountry(mode,cid)){
+    showMpInvalidSelection(mode);
+    return;
+  }
   mpState='waiting';
   hideOv(cid);setOverlay(cid,0xffcc44,.2);
   document.getElementById('mp-role').textContent=t('РЕЖИМ: ВОПРОС ОТПРАВЛЕН','MODE: QUESTION SENT');
@@ -1741,24 +1783,21 @@ function flagUrl(id){
 // ═══════════════════════════════════════════════════════════════
 
 function nextQ(){
-  const curQS=(typeof soloDiff!=='undefined'&&DIFF_QS[soloDiff])?DIFF_QS[soloDiff]:QS;
+  const curQS=getSoloQuestionCount();
   if(qIdx>=curQS){endSolo(true);return;}
   hideAllOv();clearHov();hideMcPanel();tip.style.display='none';
   document.getElementById('flag-display').style.display='none';
   document.getElementById('type-wrap').style.display='none';
 
   // Pick target — skip if data missing for MC modes
-  let attempts=0;
-  do {
-    targId=activePool[qIdx%activePool.length].id;
-    if(soloMode==='landmark'&&!LANDMARKS[targId]){qIdx++;attempts++;}
-    else if(soloMode==='leader'&&!LEADERS[targId]){qIdx++;attempts++;}
-    else if(soloMode==='religion'&&!RELIGIONS[targId]){qIdx++;attempts++;}
-    else break;
-  } while(attempts<activePool.length);
+  let candidate=null;
+  for(let attempts=0;attempts<activePool.length;attempts++){
+    const id=activePool[(qIdx+attempts)%activePool.length].id;
+    if(modeSupportsCountry(soloMode,id)){candidate=id;break;}
+  }
 
-  if(qIdx>=curQS){endSolo(true);return;}
-  targId=activePool[qIdx%activePool.length].id;
+  if(candidate===null){endSolo(true);return;}
+  targId=candidate;
   const nm=cName(targId);
   document.getElementById('hint').className='';
 

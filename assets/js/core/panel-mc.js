@@ -8,7 +8,8 @@ function isMcMode(m){ return MC_MODES.has(m||soloMode); }
 function getMcChoices(mode, id, pool){
   const L = ['A','B','C','D','E','F'];
   if(mode==='religion'){
-    const correct = RELIGIONS[id]||'Христианство';
+    const correct = RELIGIONS[id];
+    if(!correct) return null;
     const wrong = shuffled(ALL_RELIGIONS.filter(r=>r!==correct)).slice(0,5);
     return shuffled([correct,...wrong]).map((r,i)=>({label:L[i],text:r,correct:r===correct}));
   }
@@ -19,7 +20,8 @@ function getMcChoices(mode, id, pool){
     return shuffled([cn,...wrong]).map((n,i)=>({label:L[i],text:n,correct:n===cn}));
   }
   if(mode==='landmark'){
-    // Choices are country names — which country has this landmark
+    if(!LANDMARKS[id]) return null;
+    // Choices are country names - which country has this landmark
     const correct = cName(id);
     const wrong = shuffled((pool||activePool).filter(c=>c.id!==id)).slice(0,3).map(c=>c.name);
     return shuffled([correct,...wrong]).map((n,i)=>({label:L[i],text:n,correct:n===correct}));
