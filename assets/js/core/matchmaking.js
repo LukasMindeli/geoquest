@@ -21,6 +21,8 @@ function getRegionLabel(reg) {
 }
 
 function selectMmButtons() {
+  if(typeof renderModeButtonLabels === 'function') renderModeButtonLabels('#mm-mode-step [data-mm-mode]', MODE_LABELS);
+  if(typeof renderRegionButtons === 'function') renderRegionButtons('#mm-region-g .rb');
   document.querySelectorAll('#mm-mode-step [data-mm-mode]').forEach(btn => {
     btn.classList.toggle('sel', btn.dataset.mmMode === mmMode);
   });
@@ -30,6 +32,16 @@ function selectMmButtons() {
   const modeLabel = typeof getModeLabel === 'function' ? getModeLabel(mmMode) : mmMode;
   const modeEl = document.getElementById('mm-selected-mode');
   if(modeEl) modeEl.textContent = modeLabel;
+  const titleEl = document.getElementById('mm-setup-title');
+  if(titleEl) titleEl.textContent = t('СЛУЧАЙНЫЙ СОПЕРНИК', 'RANDOM OPPONENT');
+  const modeLbl = document.getElementById('mm-mode-label');
+  if(modeLbl) modeLbl.textContent = t('ВЫБЕРИ РЕЖИМ', 'CHOOSE A MODE');
+  const regionModeLbl = document.getElementById('mm-region-mode-label');
+  if(regionModeLbl) regionModeLbl.textContent = t('Режим', 'Mode');
+  const regionLbl = document.getElementById('mm-region-label');
+  if(regionLbl) regionLbl.textContent = t('Выбери регион', 'Choose a region');
+  const startBtn = document.getElementById('mm-start-btn');
+  if(startBtn) startBtn.textContent = t('🎲 Найти соперника', '🎲 Find opponent');
 }
 
 function setMmSetupStep(step) {

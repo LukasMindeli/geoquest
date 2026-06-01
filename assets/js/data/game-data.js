@@ -200,8 +200,8 @@ Object.assign(ALIASES,{
   "маршалловы острова":"Маршалловы о-ва","соломоновы острова":"Соломоновы о-ва",
   "папуа новая гвинея":"Папуа Н. Гвинея","оаэ":"ОАЭ",
 });
-window.RLABELS ={world:"Весь мир",europe:"Европа",asia:"Азия",americas:"Америка",africa:"Африка",oceania:"Океания"};
-window.RLABELS_EN ={world:"World",europe:"Europe",asia:"Asia",americas:"Americas",africa:"Africa",oceania:"Oceania"};
+window.RLABELS ={world:"Весь мир",europe:"Европа",asia:"Азия",eurasia:"Евразия",americas:"Америка",africa:"Африка",oceania:"Океания"};
+window.RLABELS_EN ={world:"World",europe:"Europe",asia:"Asia",eurasia:"Eurasia",americas:"Americas",africa:"Africa",oceania:"Oceania"};
 
 // English names
 window.EN ={

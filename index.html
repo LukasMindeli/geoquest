@@ -78,9 +78,9 @@
   </div>
   <div class="mm-box" id="mm-setup" style="display:block">
     <button class="sp-back" id="mm-back-btn" style="margin-bottom:16px">← Назад</button>
-    <div class="mm-title">СЛУЧАЙНЫЙ СОПЕРНИК</div>
+    <div class="mm-title" id="mm-setup-title">СЛУЧАЙНЫЙ СОПЕРНИК</div>
     <div id="mm-mode-step" class="flow-step flow-step-active">
-      <div style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--muted);margin-bottom:16px">ВЫБЕРИ РЕЖИМ</div>
+      <div id="mm-mode-label" style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--muted);margin-bottom:16px">ВЫБЕРИ РЕЖИМ</div>
       <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:20px">
         <button class="mode-pill sel" data-mm-mode="click">🖱️ Найди страну</button>
         <button class="mode-pill" data-mm-mode="type">⌨️ Угадай название</button>
@@ -92,9 +92,9 @@
       </div>
     </div>
     <div id="mm-region-step" class="flow-step">
-      <div class="sl">Режим</div>
+      <div class="sl" id="mm-region-mode-label">Режим</div>
       <div class="step-choice" id="mm-selected-mode">🖱️ Найди страну</div>
-      <div class="sl" style="margin-top:14px">Выбери регион</div>
+      <div class="sl" id="mm-region-label" style="margin-top:14px">Выбери регион</div>
       <div class="reg-g" id="mm-region-g">
         <button class="rb sel" data-reg="world">🌍 Весь мир</button>
         <button class="rb" data-reg="europe">🇪🇺 Европа</button>
@@ -165,7 +165,7 @@
 <div id="solo-setup">
   <div class="setup-panel">
     <button class="sp-back" id="sp-back">← Назад</button>
-    <div class="sp-title">Одиночная игра</div>
+    <div class="sp-title" id="solo-setup-title">Одиночная игра</div>
 
     <div id="solo-mode-step" class="flow-step flow-step-active">
       <div class="sl" id="sl-mode">Выбери режим</div>
@@ -181,12 +181,12 @@
     </div>
 
     <div id="solo-details-step" class="flow-step">
-      <div class="sl">Режим</div>
+      <div class="sl" id="solo-detail-mode-label">Режим</div>
       <div class="step-choice" id="solo-selected-mode">🖱️ Найди и кликни</div>
 
       <!-- Step 2: Difficulty (only for normal modes) -->
       <div id="solo-diff-wrap" style="display:block;animation:fadeIn .3s ease">
-        <div class="sl" style="margin-top:14px">Уровень сложности</div>
+        <div class="sl" id="solo-diff-label" style="margin-top:14px">Уровень сложности</div>
         <div class="diff-g">
           <button class="diff-btn sel" data-diff="easy">🟢 Лёгкий<br><span style="font-size:8px;opacity:.6">10 вопросов</span></button>
           <button class="diff-btn" data-diff="medium">🟡 Средний<br><span style="font-size:8px;opacity:.6">15 вопросов</span></button>
@@ -196,7 +196,7 @@
 
       <!-- Step 3: Region -->
       <div id="solo-region-wrap" style="display:block;animation:fadeIn .3s ease">
-        <div class="sl" style="margin-top:14px">Выбери регион</div>
+        <div class="sl" id="solo-region-label" style="margin-top:14px">Выбери регион</div>
         <div class="reg-g" id="solo-region-g">
           <button class="rb sel" data-reg="world">🌍 Весь мир</button>
           <button class="rb" data-reg="europe">🇪🇺 Европа</button>
@@ -809,9 +809,49 @@ const MODE_LABELS = {
   religion:{ru:'🕌 Религия', en:'🕌 Religion'}
 };
 
+const SOLO_MODE_BUTTON_LABELS = {
+  click:{ru:'🖱️ Найди и кликни', en:'🖱️ Find and click'},
+  type:{ru:'⌨️ Угадай название', en:'⌨️ Guess the name'},
+  capital:{ru:'🏛️ Угадай столицу', en:'🏛️ Guess the capital'},
+  flag:{ru:'🚩 Угадай флаг', en:'🚩 Guess the flag'},
+  landmark:{ru:'🗺️ Угадай достопримечательность', en:'🗺️ Guess the landmark'},
+  leader:{ru:'👑 Угадай лидера страны', en:'👑 Guess the country leader'},
+  religion:{ru:'🕌 Угадай религию', en:'🕌 Guess the religion'}
+};
+
+const DIFF_LABELS = {
+  easy:{ru:'🟢 Лёгкий<br><span style="font-size:8px;opacity:.6">10 вопросов</span>', en:'🟢 Easy<br><span style="font-size:8px;opacity:.6">10 questions</span>'},
+  medium:{ru:'🟡 Средний<br><span style="font-size:8px;opacity:.6">15 вопросов</span>', en:'🟡 Medium<br><span style="font-size:8px;opacity:.6">15 questions</span>'},
+  hard:{ru:'🔴 Сложный<br><span style="font-size:8px;opacity:.6">20 вопросов</span>', en:'🔴 Hard<br><span style="font-size:8px;opacity:.6">20 questions</span>'}
+};
+
 function getModeLabel(mode){
   const cfg = MODE_LABELS[mode] || MODE_LABELS.click;
   return t(cfg.ru, cfg.en);
+}
+
+function getSoloModeLabel(mode){
+  const cfg = SOLO_MODE_BUTTON_LABELS[mode] || SOLO_MODE_BUTTON_LABELS.click;
+  return t(cfg.ru, cfg.en);
+}
+
+function getRegionPlainLabel(reg){
+  return lang==='ru'
+    ? (RLABELS[reg] || RLABELS.world)
+    : (RLABELS_EN[reg] || RLABELS_EN.world);
+}
+
+function renderModeButtonLabels(selector, labelsMap){
+  document.querySelectorAll(selector).forEach(btn=>{
+    const cfg = labelsMap[btn.dataset.mode || btn.dataset.mmMode];
+    if(cfg) btn.textContent = lang==='ru' ? cfg.ru : cfg.en;
+  });
+}
+
+function renderRegionButtons(selector){
+  document.querySelectorAll(selector).forEach(btn=>{
+    btn.textContent = getRegionPlainLabel(btn.dataset.reg);
+  });
 }
 
 function regionMatches(country, reg){
@@ -911,7 +951,7 @@ function endSolo(won){
   document.getElementById('rt').textContent=won?'🌍 Миссия выполнена!':'Игра окончена';
   document.getElementById('rscore').textContent=score.toLocaleString();
   const _curQS=(typeof soloDiff!=='undefined'&&typeof DIFF_QS!=='undefined'&&DIFF_QS[soloDiff])?DIFF_QS[soloDiff]:QS;
-  document.getElementById('rstats').textContent=ok+' / '+_curQS+' стран · '+RLABELS[soloReg];
+  document.getElementById('rstats').textContent=ok+' / '+_curQS+' '+t('стран','countries')+' · '+getRegionPlainLabel(soloReg);
   document.getElementById('rbest').textContent=best>score?'Рекорд: '+best.toLocaleString():(best>0?'🏆 Новый рекорд!':'');
   document.getElementById('result').classList.add('show');
   // Stats & LB
@@ -1233,10 +1273,22 @@ function setSoloSetupStep(step){
   document.getElementById('sp-back').textContent=step==='mode'?t('← Назад','← Back'):t('← Режимы','← Modes');
 }
 function syncSoloSetupUI(){
+  renderModeButtonLabels('#solo-mode-step [data-mode]', SOLO_MODE_BUTTON_LABELS);
+  renderRegionButtons('#solo-region-g .rb');
   selectButtonInGroup('#solo-mode-step [data-mode]', soloMode, 'mode');
   selectButtonInGroup('#solo-region-g .rb', soloReg, 'reg');
   selectButtonInGroup('#solo-details-step .diff-btn', soloDiff, 'diff');
-  document.getElementById('solo-selected-mode').textContent=getModeLabel(soloMode);
+  document.querySelectorAll('#solo-details-step .diff-btn').forEach(btn=>{
+    const cfg = DIFF_LABELS[btn.dataset.diff];
+    if(cfg) btn.innerHTML = lang==='ru' ? cfg.ru : cfg.en;
+  });
+  document.getElementById('solo-setup-title').textContent=t('Одиночная игра','Solo game');
+  document.getElementById('sl-mode').textContent=t('Выбери режим','Choose a mode');
+  document.getElementById('solo-detail-mode-label').textContent=t('Режим','Mode');
+  document.getElementById('solo-diff-label').textContent=t('Уровень сложности','Difficulty');
+  document.getElementById('solo-region-label').textContent=t('Выбери регион','Choose a region');
+  document.getElementById('solo-selected-mode').textContent=getSoloModeLabel(soloMode);
+  document.getElementById('solo-play-btn').textContent=t('▶ Начать игру','▶ Start game');
 }
 function openSoloSetup(){
   soloMode='click';
@@ -1705,6 +1757,7 @@ function toggleLang(){
   });
   if(typeof syncSoloSetupUI==='function') syncSoloSetupUI();
   if(typeof selectMmButtons==='function') selectMmButtons();
+  if(typeof renderRegionButtons==='function') renderRegionButtons('#mp-reg-g .rb');
   if(typeof refreshDailyUI==='function') refreshDailyUI();
   if(typeof refreshAuthUI==='function') refreshAuthUI();
 }
