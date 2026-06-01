@@ -29,15 +29,15 @@
     <div class="ag-ico" id="ag-ico">🔐</div>
     <div class="ag-title" id="ag-title">Нужен аккаунт</div>
     <div class="ag-sub" id="ag-sub">Чтобы играть онлайн и писать в чате,<br>войди через Google аккаунт</div>
-    <button class="ag-btn" id="ag-login-btn" onclick="signInGoogle()">🔑 Войти через Google</button>
-    <button class="ag-skip" id="ag-cancel-btn" onclick="closeAuthGate()">Отмена</button>
+    <button class="ag-btn" id="ag-login-btn" onclick="signInGoogle()" data-ru="🔑 Войти через Google" data-en="🔑 Sign in with Google">🔑 Войти через Google</button>
+    <button class="ag-skip" id="ag-cancel-btn" onclick="closeAuthGate()" data-ru="Отмена" data-en="Cancel">Отмена</button>
   </div>
 </div>
 
 <!-- AUTH BAR -->
 <div id="auth-bar">
   <div id="auth-info"></div>
-  <button id="auth-btn">🔑 Войти через Google</button>
+  <button id="auth-btn" data-ru="🔑 Войти" data-en="🔑 Sign In">🔑 Войти</button>
 </div>
 
 <!-- CHAT FAB -->
@@ -186,9 +186,9 @@
 
 <!-- VIEWER TOOLBAR -->
 <div id="viewer-bar">
-  <button class="vb-btn active" id="vb-labels">Названия</button>
+  <button class="vb-btn active" id="vb-labels" data-ru="Названия" data-en="Labels">Названия</button>
   <div class="vb-spacer"></div>
-  <button class="vb-btn" id="vb-back">← Меню</button>
+  <button class="vb-btn" id="vb-back" data-ru="← Меню" data-en="← Menu">← Меню</button>
 </div>
 
 <!-- SOLO HUD -->
@@ -1595,6 +1595,8 @@ function toggleLang(){
   Object.entries(labelEls).forEach(([id,el])=>{
     el.textContent=cName(parseInt(id));
   });
+  if(typeof refreshDailyUI==='function') refreshDailyUI();
+  if(typeof refreshAuthUI==='function') refreshAuthUI();
 }
 
 // ═══════════════════════════════════════════════════════════════

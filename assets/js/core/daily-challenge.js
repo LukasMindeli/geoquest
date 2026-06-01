@@ -1,4 +1,8 @@
 window.__dailyRun = null;
+const DAILY_MONTHS = {
+  ru: ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'],
+  en: ['January','February','March','April','May','June','July','August','September','October','November','December']
+};
 
 function beginDailyRun(){
   window.__dailyRun = { key: getDailyKey() };
@@ -26,12 +30,26 @@ function cancelDailyRun(){
 function getDailyKey(){
   const d=new Date();return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;}
 
+function formatDailyDate(date = new Date()){
+  const months = (typeof lang !== 'undefined' && lang === 'en') ? DAILY_MONTHS.en : DAILY_MONTHS.ru;
+  if(typeof lang !== 'undefined' && lang === 'en'){
+    return `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
+  }
+  return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
+}
+
+function refreshDailyUI(){
+  const dateLabel = document.getElementById('daily-date-lbl');
+  if(dateLabel) dateLabel.textContent = formatDailyDate();
+}
+
+window.refreshDailyUI = refreshDailyUI;
+
 function openDaily(){
   loadProfile();
   const key=getDailyKey();
-  const months=['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
   const d=new Date();
-  document.getElementById('daily-date-lbl').textContent=d.getDate()+' '+months[d.getMonth()]+' '+d.getFullYear();
+  document.getElementById('daily-date-lbl').textContent=formatDailyDate(d);
   if(profileData.dailyDone&&profileData.dailyDone[key]!==undefined){
     document.getElementById('daily-done-wrap').style.display='block';
     document.getElementById('daily-play-wrap').style.display='none';

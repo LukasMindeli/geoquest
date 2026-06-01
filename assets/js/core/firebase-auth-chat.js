@@ -1,5 +1,6 @@
 let db = null, auth = null, currentUser = null;
 window._fbAuthPending = true;
+let _authGateReason = 'login';
 
 function getAuthHostConfig() {
   const host = (typeof window !== 'undefined' && window.location && window.location.hostname) ? window.location.hostname : '';
@@ -58,16 +59,57 @@ function updateAuthUI(user) {
     const info = document.getElementById('auth-info');
     if(!btn) return;
     if(user) {
-      btn.textContent = 'Выйти';
+      btn.textContent = t('Выйти','Sign Out');
       btn.onclick = () => { if(auth) auth.signOut(); };
       if(info) info.innerHTML = `<img src="${user.photoURL||''}" style="width:24px;height:24px;border-radius:50%;vertical-align:middle;margin-right:6px"/><span style="font-size:11px">${user.displayName||'Игрок'}</span>`;
     } else {
-      btn.textContent = '🔑 Войти';
+      btn.textContent = t('🔑 Войти','🔑 Sign In');
       btn.onclick = ()=>showAuthGate('login');
       if(info) info.innerHTML = '';
     }
   } catch(e) {}
 }
+
+function getAuthGateCopy(reason) {
+  if(reason === 'online') {
+    return {
+      icon: '🌐',
+      title: t('Нужен аккаунт Google','Google account required'),
+      sub: t(
+        'Для игры онлайн и поиска соперников\nнеобходимо войти через Google',
+        'Sign in with Google to play online\nand find opponents.'
+      )
+    };
+  }
+  if(reason === 'chat') {
+    return {
+      icon: '💬',
+      title: t('Войди чтобы писать в чат','Sign in to chat'),
+      sub: t(
+        'Глобальный чат доступен только\nдля авторизованных пользователей',
+        'Global chat is available only\nto signed-in players.'
+      )
+    };
+  }
+  return {
+    icon: '🔐',
+    title: t('Войди через Google','Sign in with Google'),
+    sub: t(
+      'Один аккаунт — один профиль.\nТвои результаты сохранятся навсегда.',
+      'One account, one profile.\nYour progress stays saved.'
+    )
+  };
+}
+
+function refreshAuthUI() {
+  updateAuthUI(currentUser);
+  const gate = document.getElementById('auth-gate');
+  if(gate && gate.classList.contains('show')) {
+    showAuthGate(_authGateReason, _authGateCallback, _authGateAction);
+  }
+}
+
+window.refreshAuthUI = refreshAuthUI;
 
 // Auth gate
 let _authGateCallback = null;
@@ -122,27 +164,22 @@ function runPostAuthAction() {
 }
 
 function showAuthGate(reason, callback, action) {
+  _authGateReason = reason || 'login';
   _authGateCallback = callback || null;
   setPostAuthAction(action || null);
   const gate = document.getElementById('auth-gate');
   const title = document.getElementById('ag-title');
   const sub = document.getElementById('ag-sub');
   const ico = document.getElementById('ag-ico');
+  const loginBtn = document.getElementById('ag-login-btn');
   const cancelBtn = document.getElementById('ag-cancel-btn');
-  if(reason === 'online') {
-    ico.textContent = '🌐';
-    title.textContent = 'Нужен аккаунт Google';
-    sub.textContent = 'Для игры онлайн и поиска соперников\nнеобходимо войти через Google';
-    cancelBtn.style.display = 'block';
-  } else if(reason === 'chat') {
-    ico.textContent = '💬';
-    title.textContent = 'Войди чтобы писать в чат';
-    sub.textContent = 'Глобальный чат доступен только\nдля авторизованных пользователей';
-    cancelBtn.style.display = 'block';
-  } else {
-    ico.textContent = '🔐';
-    title.textContent = 'Войди через Google';
-    sub.textContent = 'Один аккаунт — один профиль.\nТвои результаты сохранятся навсегда.';
+  const copy = getAuthGateCopy(_authGateReason);
+  ico.textContent = copy.icon;
+  title.textContent = copy.title;
+  sub.textContent = copy.sub;
+  if(loginBtn) loginBtn.textContent = t('🔑 Войти через Google','🔑 Sign in with Google');
+  if(cancelBtn) {
+    cancelBtn.textContent = t('Отмена','Cancel');
     cancelBtn.style.display = 'block';
   }
   gate.classList.add('show');
@@ -151,6 +188,7 @@ function showAuthGate(reason, callback, action) {
 function closeAuthGate(clearAction = true) {
   document.getElementById('auth-gate').classList.remove('show');
   _authGateCallback = null;
+  _authGateReason = 'login';
   if(clearAction) setPostAuthAction(null);
 }
 
