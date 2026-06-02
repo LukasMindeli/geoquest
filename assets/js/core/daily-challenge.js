@@ -31,10 +31,13 @@ function getDailyKey(){
   const d=new Date();return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;}
 
 function formatDailyDate(date = new Date()){
-  const months = (typeof lang !== 'undefined' && lang === 'en') ? DAILY_MONTHS.en : DAILY_MONTHS.ru;
-  if(typeof lang !== 'undefined' && lang === 'en'){
-    return `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
+  if(typeof getCurrentLangConfig === 'function'){
+    try{
+      return new Intl.DateTimeFormat(getCurrentLangConfig().locale,{year:'numeric',month:'long',day:'numeric'}).format(date);
+    }catch(_){}
   }
+  const months = (typeof lang !== 'undefined' && lang === 'en') ? DAILY_MONTHS.en : DAILY_MONTHS.ru;
+  if(typeof lang !== 'undefined' && lang === 'en') return `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
   return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
 }
 

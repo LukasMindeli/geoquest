@@ -155,7 +155,7 @@
       <div class="ad-label">Sponsored</div>
       <div class="ad-slot"></div>
     </div>
-    <button id="lang-btn" style="width:100%;padding:10px;background:transparent;border:1px solid var(--border);color:var(--muted);font-family:'Space Mono',monospace;font-size:10px;letter-spacing:3px;cursor:pointer;margin-top:4px;transition:all .2s;" onclick="toggleLang()">🌐 ENGLISH</button>
+    <select id="lang-select" aria-label="Language" style="width:100%;padding:10px;background:transparent;border:1px solid var(--border);color:var(--muted);font-family:'Space Mono',monospace;font-size:10px;letter-spacing:2px;cursor:pointer;margin-top:4px;transition:all .2s;text-transform:uppercase;"></select>
     <div class="mm-legal">
       <a href="/privacy.html">Privacy</a>
       <span>•</span>
@@ -882,6 +882,15 @@ const DIFF_LABELS = {
   hard:{ru:'🔴 Сложный<br><span style="font-size:8px;opacity:.6">20 вопросов</span>', en:'🔴 Hard<br><span style="font-size:8px;opacity:.6">20 questions</span>'}
 };
 
+function getDifficultyLabel(diff){
+  const cfg = {
+    easy:{icon:'🟢',ru:'Лёгкий',en:'Easy',count:10},
+    medium:{icon:'🟡',ru:'Средний',en:'Medium',count:15},
+    hard:{icon:'🔴',ru:'Сложный',en:'Hard',count:20}
+  }[diff] || {icon:'🟢',ru:'Лёгкий',en:'Easy',count:10};
+  return `${cfg.icon} ${t(cfg.ru,cfg.en)}<br><span style="font-size:8px;opacity:.6">${cfg.count} ${t('вопросов','questions')}</span>`;
+}
+
 function getModeLabel(mode){
   const cfg = MODE_LABELS[mode] || MODE_LABELS.click;
   return t(cfg.ru, cfg.en);
@@ -893,15 +902,15 @@ function getSoloModeLabel(mode){
 }
 
 function getRegionPlainLabel(reg){
-  return lang==='ru'
-    ? (RLABELS[reg] || RLABELS.world)
-    : (RLABELS_EN[reg] || RLABELS_EN.world);
+  return typeof getRegionLabel==='function'
+    ? getRegionLabel(reg)
+    : (lang==='ru' ? (RLABELS[reg] || RLABELS.world) : (RLABELS_EN[reg] || RLABELS_EN.world));
 }
 
 function renderModeButtonLabels(selector, labelsMap){
   document.querySelectorAll(selector).forEach(btn=>{
     const cfg = labelsMap[btn.dataset.mode || btn.dataset.mmMode];
-    if(cfg) btn.textContent = lang==='ru' ? cfg.ru : cfg.en;
+    if(cfg) btn.textContent = typeof pickLocalized==='function' ? pickLocalized(cfg) : (lang==='ru' ? cfg.ru : cfg.en);
   });
 }
 
@@ -976,9 +985,7 @@ document.getElementById('tinput').addEventListener('input',e=>{
   if(gst!=='play'||(soloMode!=='type'&&soloMode!=='capital'&&soloMode!=='flag'))return;
   const v=e.target.value.trim().toLowerCase().replace(/ё/g,'е');
   if(soloMode==='type'){
-    const m=ALIASES[v]||(lang==='en'?Object.entries(EN).find(([,n])=>n.toLowerCase()===v)?.[1]:null);
-    const match=m&&(lang==='ru'?COUNTRIES[targId]?.n===m:EN[targId]===m||COUNTRIES[targId]?.n===m);
-    if(match||(lang==='en'&&EN[targId]&&EN[targId].toLowerCase()===v)){
+    if(countryInputMatches(v,targId)){
       clearInterval(tid);gst='fb';cok=false;e.target.className='ok';recordStat('correct',targId);sGood();
     }
   } else if(soloMode==='capital'){
@@ -989,9 +996,7 @@ document.getElementById('tinput').addEventListener('input',e=>{
       clearInterval(tid);gst='fb';cok=false;e.target.className='ok';recordStat('correct',targId);sGood();
     }
   } else if(soloMode==='flag'){
-    const enM=EN[targId]&&EN[targId].toLowerCase()===v;
-    const ruM=ALIASES[v]&&COUNTRIES[targId]?.n===ALIASES[v];
-    if(enM||ruM){
+    if(countryInputMatches(v,targId)){
       clearInterval(tid);gst='fb';cok=false;e.target.className='ok';
       profileData.flagStreak=(profileData.flagStreak||0)+1;
       recordStat('correct',targId);sGood();
@@ -1191,7 +1196,7 @@ function getMpRevealAnswer(mode,id){
   if(!id)return '';
   if(mode==='capital')return capName(id);
   if(mode==='leader')return lang==='ru'?LEADERS[id]?.name:LEADERS[id]?.nameEn;
-  if(mode==='religion')return RELIGIONS[id]||'';
+  if(mode==='religion')return localizedReligionName(RELIGIONS[id]);
   if(mode==='landmark')return lang==='ru'?LANDMARKS[id]?.name:LANDMARKS[id]?.nameEn;
   return cName(id);
 }
@@ -1395,9 +1400,7 @@ function handleMpTextAnswer(input){
   const v=input.value.trim().toLowerCase().replace(/ё/g,'е');
   let ok=false;
   if(mpFindMode==='type'){
-    const m=ALIASES[v]||(lang==='en'?Object.entries(EN).find(([,n])=>n.toLowerCase()===v)?.[1]:null);
-    ok=!!(m&&(lang==='ru'?COUNTRIES[mpFindTargetId]?.n===m:EN[mpFindTargetId]===m||COUNTRIES[mpFindTargetId]?.n===m));
-    if(!ok&&lang==='en'&&EN[mpFindTargetId]&&EN[mpFindTargetId].toLowerCase()===v)ok=true;
+    ok=countryInputMatches(v,mpFindTargetId);
   }else if(mpFindMode==='capital'){
     const cap=CAPITALS[mpFindTargetId];
     if(cap){
@@ -1406,7 +1409,7 @@ function handleMpTextAnswer(input){
       ok=v===correct0||v===correct1;
     }
   }else if(mpFindMode==='flag'){
-    ok=(EN[mpFindTargetId]&&EN[mpFindTargetId].toLowerCase()===v)||(ALIASES[v]&&COUNTRIES[mpFindTargetId]?.n===ALIASES[v]);
+    ok=countryInputMatches(v,mpFindTargetId);
   }
   if(!ok)return;
   clearInterval(mpTid);
@@ -1695,8 +1698,7 @@ function syncSoloSetupUI(){
   selectButtonInGroup('#solo-region-g .rb', soloReg, 'reg');
   selectButtonInGroup('#solo-details-step .diff-btn', soloDiff, 'diff');
   document.querySelectorAll('#solo-details-step .diff-btn').forEach(btn=>{
-    const cfg = DIFF_LABELS[btn.dataset.diff];
-    if(cfg) btn.innerHTML = lang==='ru' ? cfg.ru : cfg.en;
+    btn.innerHTML = getDifficultyLabel(btn.dataset.diff);
   });
   document.getElementById('solo-setup-title').textContent=t('Одиночная игра','Solo game');
   document.getElementById('sl-mode').textContent=t('Выбери режим','Choose a mode');
@@ -1933,14 +1935,15 @@ function nextQ(){
   if(soloMode==='religion'){
     const rel=RELIGIONS[targId];
     if(!rel){qIdx++;nextQ();return;}
+    const relName=localizedReligionName(rel);
     document.getElementById('mode-lbl').textContent=t('РЕЛИГИЯ ЭТОЙ СТРАНЫ?','MAIN RELIGION OF THIS COUNTRY?');
     document.getElementById('tname').textContent=nm.toUpperCase();
     setOverlay(targId,0xffaa00,.25);
     focusSoloCountry(targId,3.25,1000,false,true);
     const choices=getMcChoices('religion',targId);
     const T=TB;clearInterval(tid);timeLeft=T;syncTimer(T);
-    tid=setInterval(()=>{timeLeft--;syncTimer(T);if(timeLeft<=0){clearInterval(tid);onMcTimeout(rel);}},1000);
-    showMcPanel(choices,(ok)=>{clearInterval(tid);if(ok){recordStat('correct',targId);sGood();}else{recordStat('wrong',targId);sBad(rel);}});
+    tid=setInterval(()=>{timeLeft--;syncTimer(T);if(timeLeft<=0){clearInterval(tid);onMcTimeout(relName);}},1000);
+    showMcPanel(choices,(ok)=>{clearInterval(tid);if(ok){recordStat('correct',targId);sGood();}else{recordStat('wrong',targId);sBad(relName);}});
     gst='play';cok=false;syncDots();return;
   }
 
@@ -2163,22 +2166,46 @@ function startFireworks(duration){
 // ═══════════════════════════════════════════════════════════════
 //  LANGUAGE
 // ═══════════════════════════════════════════════════════════════
-function toggleLang(){
-  lang=lang==='ru'?'en':'ru';
-  document.getElementById('lang-btn').textContent=lang==='ru'?'🌐 ENGLISH':'🌐 РУССКИЙ';
-  // Update all data-ru/data-en elements
-  document.querySelectorAll('[data-ru]').forEach(el=>{
-    el.textContent=lang==='ru'?el.dataset.ru:el.dataset.en;
+function translateStaticElement(el){
+  if(!el||!el.dataset) return;
+  el.textContent=t(el.dataset.ru,el.dataset.en);
+}
+
+function populateLanguageSelect(){
+  const select=document.getElementById('lang-select');
+  if(!select||!Array.isArray(SUPPORTED_LANGUAGES)) return;
+  select.innerHTML='';
+  SUPPORTED_LANGUAGES.forEach(item=>{
+    const option=document.createElement('option');
+    option.value=item.code;
+    option.textContent=`🌐 ${item.label}`;
+    select.appendChild(option);
   });
-  // Update labels on globe
+  select.value=lang;
+  select.addEventListener('change',()=>changeLang(select.value));
+}
+
+function applyLanguageToUI(){
+  document.querySelectorAll('[data-ru]').forEach(translateStaticElement);
   Object.entries(labelEls).forEach(([id,el])=>{
     el.textContent=cName(parseInt(id));
   });
+  const select=document.getElementById('lang-select');
+  if(select) select.value=lang;
   if(typeof syncSoloSetupUI==='function') syncSoloSetupUI();
   if(typeof selectMmButtons==='function') selectMmButtons();
   if(typeof renderRegionButtons==='function') renderRegionButtons('#mp-reg-g .rb');
   if(typeof refreshDailyUI==='function') refreshDailyUI();
   if(typeof refreshAuthUI==='function') refreshAuthUI();
+}
+
+function changeLang(code){
+  setBaseLang(code);
+  applyLanguageToUI();
+}
+
+function toggleLang(){
+  changeLang(nextLangCode());
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -2187,6 +2214,8 @@ function toggleLang(){
 animate();
 createLabels();
 loadProfile();
+populateLanguageSelect();
+applyLanguageToUI();
 loadWorld().then(()=>{
   const ld=document.getElementById('loading');ld.classList.add('out');
   setTimeout(()=>{

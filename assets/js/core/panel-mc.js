@@ -8,10 +8,10 @@ function isMcMode(m){ return MC_MODES.has(m||soloMode); }
 function getMcChoices(mode, id, pool){
   const L = ['A','B','C','D','E','F'];
   if(mode==='religion'){
-    const correct = RELIGIONS[id];
-    if(!correct) return null;
-    const wrong = shuffled(ALL_RELIGIONS.filter(r=>r!==correct)).slice(0,5);
-    return shuffled([correct,...wrong]).map((r,i)=>({label:L[i],text:r,correct:r===correct}));
+    const correctRaw = RELIGIONS[id];
+    if(!correctRaw) return null;
+    const wrong = shuffled(ALL_RELIGIONS.filter(r=>r!==correctRaw)).slice(0,5);
+    return shuffled([correctRaw,...wrong]).map((r,i)=>({label:L[i],text:localizedReligionName(r),correct:r===correctRaw}));
   }
   if(mode==='leader'){
     const ldr = LEADERS[id]; if(!ldr) return null;

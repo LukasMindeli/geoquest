@@ -200,6 +200,31 @@ Object.assign(ALIASES,{
   "маршалловы острова":"Маршалловы о-ва","соломоновы острова":"Соломоновы о-ва",
   "папуа новая гвинея":"Папуа Н. Гвинея","оаэ":"ОАЭ",
 });
+window.MANUAL_ALIASES = {
+  "сша":840,"usa":840,"us":840,"u.s.a":840,"america":840,"united states":840,
+  "великобритания":826,"британия":826,"англия":826,"uk":826,"u.k":826,"great britain":826,"britain":826,"united kingdom":826,
+  "оаэ":784,"uae":784,"emirates":784,"united arab emirates":784,
+  "дрк":180,"drc":180,"dr congo":180,"democratic republic of congo":180,
+  "конго":178,"republic of congo":178,
+  "цар":140,"car":140,"central african republic":140,
+  "юар":710,"south africa":710,
+  "северная корея":408,"north korea":408,"dprk":408,
+  "южная корея":410,"south korea":410,
+  "македония":807,"north macedonia":807,
+  "босния":70,"bosnia":70,"bosnia and herzegovina":70,
+  "тринидад":780,"trinidad":780,"trinidad and tobago":780,
+  "антигуа":28,"antigua":28,"antigua and barbuda":28,
+  "сент китс":659,"saint kitts":659,"st kitts":659,
+  "сент винсент":670,"saint vincent":670,"st vincent":670,
+  "сан томе":678,"sao tome":678,
+  "кабо верде":132,"cape verde":132,"cabo verde":132,
+  "восточный тимор":626,"timor leste":626,"east timor":626,
+  "гвинея бисау":624,"guinea bissau":624,
+  "экваториальная гвинея":226,"equatorial guinea":226,
+  "папуа новая гвинея":598,"papua new guinea":598,
+  "маршалловы острова":584,"marshall islands":584,
+  "соломоновы острова":90,"solomon islands":90
+};
 window.RLABELS ={world:"Весь мир",europe:"Европа",asia:"Азия",eurasia:"Евразия",americas:"Америка",africa:"Африка",oceania:"Океания"};
 window.RLABELS_EN ={world:"World",europe:"Europe",asia:"Asia",eurasia:"Eurasia",americas:"Americas",africa:"Africa",oceania:"Oceania"};
 
