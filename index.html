@@ -16,7 +16,7 @@
 <link rel="shortcut icon" type="image/png" href="/favicon.png">
 <link rel="apple-touch-icon" href="/favicon.png">
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/app.css?v=20260602-features">
+<link rel="stylesheet" href="assets/css/app.css?v=20260602-atlas">
 
 </head>
 <body>
@@ -142,6 +142,10 @@
       <button class="mm-btn" id="btn-lb">
         <span class="mi">🌐</span><span data-ru="Лидеры" data-en="Leaderboard">Лидеры</span>
         <span class="md" data-ru="Глобальный рейтинг" data-en="Global ranking">Глобальный рейтинг</span>
+      </button>
+      <button class="mm-btn wide" id="btn-atlas" style="border-color:rgba(79,255,176,.28)">
+        <span class="mi">📚</span><span data-ru="Энциклопедия" data-en="Country Atlas">Энциклопедия</span>
+        <span class="md" data-ru="Карточки стран, факты и быстрый переход на глобус" data-en="Country cards, facts and quick globe focus">Карточки стран, факты и быстрый переход на глобус</span>
       </button>
       <button class="mm-btn" id="btn-profile">
         <span class="mi">👤</span><span data-ru="Профиль" data-en="Profile">Профиль</span>
@@ -509,6 +513,29 @@
     <div class="ov-title">🏆 Достижения</div>
     <div class="ov-sub">РАЗБЛОКИРОВАНО: <span id="ach-count">0/0</span></div>
     <div class="ach-grid" id="ach-grid"></div>
+  </div>
+</div>
+
+<!-- COUNTRY ATLAS -->
+<div class="ov-panel" id="panel-atlas">
+  <div class="ov-inner atlas-inner">
+    <button class="ov-close" onclick="closePanel('panel-atlas')">✕</button>
+    <div class="ov-title" data-ru="📚 Энциклопедия" data-en="📚 Country Atlas">📚 Энциклопедия</div>
+    <div class="ov-sub" data-ru="ИНТЕРАКТИВНЫЙ АТЛАС СТРАН" data-en="INTERACTIVE COUNTRY ATLAS">ИНТЕРАКТИВНЫЙ АТЛАС СТРАН</div>
+    <div class="atlas-hero">
+      <div class="atlas-hero-kicker" data-ru="НЕ ПРОСТО СПРАВОЧНИК" data-en="NOT JUST A DATABASE">НЕ ПРОСТО СПРАВОЧНИК</div>
+      <div class="atlas-hero-title" data-ru="Открывай страны как маленькие экспедиции" data-en="Explore countries like tiny expeditions">Открывай страны как маленькие экспедиции</div>
+      <div class="atlas-hero-text" data-ru="Флаг, столица, язык, валюта, религия, игровые подсказки и быстрый переход к стране на глобусе." data-en="Flag, capital, language, currency, religion, game clues, and a quick jump to the country on the globe.">Флаг, столица, язык, валюта, религия, игровые подсказки и быстрый переход к стране на глобусе.</div>
+    </div>
+    <div class="atlas-controls">
+      <input id="atlas-search" class="atlas-search" type="search" inputmode="search" autocomplete="off" placeholder="Найти страну, столицу или факт..." />
+      <div class="atlas-tabs" id="atlas-tabs"></div>
+    </div>
+    <div class="atlas-featured" id="atlas-featured"></div>
+    <div class="atlas-shell">
+      <div class="atlas-list" id="atlas-list"></div>
+      <div class="atlas-detail" id="atlas-detail"></div>
+    </div>
   </div>
 </div>
 
@@ -1766,6 +1793,7 @@ document.getElementById('btn-profile').addEventListener('click',()=>{
   openProfile();
 });
 document.getElementById('btn-daily').addEventListener('click',openDaily);
+document.getElementById('btn-atlas').addEventListener('click',openAtlas);
 document.getElementById('btn-ach').addEventListener('click',()=>{renderAchievements();document.getElementById('panel-ach').classList.add('show');});
 document.getElementById('btn-lb').addEventListener('click',openLB);
 // Solo setup
@@ -2128,6 +2156,224 @@ function getCountryFacts(id){
 function pickCountryFact(id){
   const facts=getCountryFacts(id);
   return facts.length?facts[Math.floor(Math.random()*facts.length)]:cName(id);
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  COUNTRY ATLAS
+// ═══════════════════════════════════════════════════════════════
+let atlasRegion='world';
+let atlasQuery='';
+let atlasSelectedId=null;
+
+function atlasUnknown(){
+  return t('данные уточняются','data pending');
+}
+
+function atlasCapital(id){
+  const capital=capName(id);
+  return capital==='?'?atlasUnknown():capital;
+}
+
+function atlasLocale(){
+  return typeof getCurrentLangConfig==='function' ? getCurrentLangConfig().locale : (lang||'ru');
+}
+
+function getAtlasRegionKeys(){
+  return ['world','europe','asia','eurasia','americas','africa','oceania'];
+}
+
+function getAtlasHighlightIds(){
+  return [840,250,276,392,818,36,76,156,804,51,616,356].filter(id=>COUNTRIES[id]);
+}
+
+function getAtlasSearchText(id){
+  const extra=getCountryExtra(id);
+  const facts=getCountryFacts(id).join(' ');
+  const leader=LEADERS[id]?[LEADERS[id].name,LEADERS[id].nameEn].join(' '):'';
+  const landmark=LANDMARKS[id]?[LANDMARKS[id].name,LANDMARKS[id].nameEn].join(' '):'';
+  return [
+    cName(id),
+    typeof localizedCountryName==='function'?localizedCountryName(id,'en'):'',
+    COUNTRIES[id]?.n,
+    atlasCapital(id),
+    extra.population,
+    extra.language,
+    extra.currency,
+    getRegionPlainLabel(COUNTRIES[id]?.r||'world'),
+    leader,
+    landmark,
+    facts
+  ].join(' ').toLowerCase();
+}
+
+function getAtlasCountries(){
+  const q=atlasQuery.trim().toLowerCase();
+  return Object.keys(COUNTRIES)
+    .map(Number)
+    .filter(id=>regionMatches(COUNTRIES[id],atlasRegion))
+    .filter(id=>!q || getAtlasSearchText(id).includes(q))
+    .sort((a,b)=>cName(a).localeCompare(cName(b),atlasLocale(),{sensitivity:'base'}));
+}
+
+function buildAtlasTabs(){
+  const tabs=document.getElementById('atlas-tabs');
+  if(!tabs)return;
+  tabs.innerHTML=getAtlasRegionKeys().map(reg=>`
+    <button class="atlas-tab ${reg===atlasRegion?'sel':''}" type="button" data-atlas-reg="${reg}">
+      ${escHtml(getRegionPlainLabel(reg))}
+    </button>
+  `).join('');
+  tabs.querySelectorAll('[data-atlas-reg]').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      atlasRegion=btn.dataset.atlasReg;
+      atlasSelectedId=null;
+      renderAtlas();
+    });
+  });
+}
+
+function renderAtlasFeatured(){
+  const el=document.getElementById('atlas-featured');
+  if(!el)return;
+  const ids=getAtlasHighlightIds()
+    .filter(id=>regionMatches(COUNTRIES[id],atlasRegion))
+    .slice(0,8);
+  el.innerHTML=ids.map(id=>`
+    <button class="atlas-chip ${id===atlasSelectedId?'sel':''}" type="button" data-atlas-id="${id}">
+      <span class="atlas-chip-flag">${getCountryFlagMarkup(id)}</span>
+      <span>${escHtml(cName(id))}</span>
+    </button>
+  `).join('');
+  el.querySelectorAll('[data-atlas-id]').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      atlasSelectedId=parseInt(btn.dataset.atlasId,10);
+      renderAtlas();
+    });
+  });
+}
+
+function renderAtlasList(ids){
+  const el=document.getElementById('atlas-list');
+  if(!el)return;
+  if(!ids.length){
+    el.innerHTML=`<div class="atlas-empty">${escHtml(t('Ничего не найдено. Попробуй другой регион или запрос.','Nothing found. Try another region or search.'))}</div>`;
+    return;
+  }
+  el.innerHTML=ids.map(id=>`
+    <button class="atlas-card ${id===atlasSelectedId?'sel':''}" type="button" data-atlas-id="${id}">
+      <span class="atlas-card-flag">${getCountryFlagMarkup(id)}</span>
+      <span>
+        <b>${escHtml(cName(id))}</b>
+        <small>${escHtml(atlasCapital(id))} • ${escHtml(getRegionPlainLabel(COUNTRIES[id].r||'world'))}</small>
+      </span>
+      <span class="atlas-card-arrow">→</span>
+    </button>
+  `).join('');
+  el.querySelectorAll('[data-atlas-id]').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      atlasSelectedId=parseInt(btn.dataset.atlasId,10);
+      renderAtlas();
+    });
+  });
+}
+
+function atlasStat(label,value){
+  return `
+    <div class="atlas-stat">
+      <div class="atlas-stat-label">${escHtml(label)}</div>
+      <div class="atlas-stat-value">${escHtml(value||atlasUnknown())}</div>
+    </div>
+  `;
+}
+
+function renderAtlasDetail(id){
+  const el=document.getElementById('atlas-detail');
+  if(!el)return;
+  if(!id || !COUNTRIES[id]){
+    el.innerHTML=`<div class="atlas-empty">${escHtml(t('Выбери страну, чтобы открыть карточку.','Choose a country to open its card.'))}</div>`;
+    return;
+  }
+  const extra=getCountryExtra(id);
+  const region=getRegionPlainLabel(COUNTRIES[id].r||'world');
+  const religion=RELIGIONS[id]?localizedReligionName(RELIGIONS[id]):atlasUnknown();
+  const leader=LEADERS[id]?(lang==='ru'?LEADERS[id].name:LEADERS[id].nameEn):atlasUnknown();
+  const landmark=LANDMARKS[id]?(lang==='ru'?LANDMARKS[id].name:LANDMARKS[id].nameEn):atlasUnknown();
+  const facts=getCountryFacts(id).slice(0,4);
+  el.innerHTML=`
+    <div class="atlas-detail-card">
+      <div class="atlas-detail-head">
+        <div class="atlas-detail-flag">${getCountryFlagMarkup(id)}</div>
+        <div>
+          <div class="atlas-detail-name">${escHtml(cName(id))}</div>
+          <div class="atlas-meta">${escHtml(region)} • ${escHtml(t('страна в игровой базе','country in game database'))}</div>
+        </div>
+      </div>
+      <div class="atlas-stat-grid">
+        ${atlasStat(t('Столица','Capital'),atlasCapital(id))}
+        ${atlasStat(t('Население','Population'),extra.population)}
+        ${atlasStat(t('Язык','Language'),extra.language)}
+        ${atlasStat(t('Валюта','Currency'),extra.currency)}
+        ${atlasStat(t('Религия','Religion'),religion)}
+        ${atlasStat(t('Лидер в игре','Game leader'),leader)}
+        ${atlasStat(t('Ориентир','Landmark'),landmark)}
+        ${atlasStat(t('Регион','Region'),region)}
+      </div>
+      <div class="atlas-story">
+        <div class="atlas-story-kicker">${escHtml(t('ИГРОВЫЕ ПОДСКАЗКИ','GAME CLUES'))}</div>
+        ${(facts.length?facts:[t('Здесь пока мало фактов, но страна уже есть на глобусе.','There are not many facts yet, but the country is already on the globe.')]).map(f=>`<div class="atlas-fact">${escHtml(f)}</div>`).join('')}
+      </div>
+      <div class="atlas-actions">
+        <button class="atlas-action" type="button" id="atlas-view-country">${escHtml(t('На глобус','View globe'))}</button>
+        <button class="atlas-action alt" type="button" id="atlas-copy-clue">${escHtml(t('Случайный факт','Random clue'))}</button>
+      </div>
+    </div>
+  `;
+  const viewBtn=document.getElementById('atlas-view-country');
+  if(viewBtn)viewBtn.addEventListener('click',()=>{
+    closePanel('panel-atlas');
+    showScreen('viewer');
+    document.getElementById('viewer-bar').classList.add('show');
+    showLabels=true;
+    hideAllOv();
+    setOverlay(id,0x4fffb0,.5);
+    rotateToCountry(id,3.3);
+    showCountryPop(id);
+  });
+  const clueBtn=document.getElementById('atlas-copy-clue');
+  if(clueBtn)clueBtn.addEventListener('click',()=>{
+    const fact=pickCountryFact(id);
+    const story=document.querySelector('#atlas-detail .atlas-story');
+    if(story){
+      story.innerHTML=`
+        <div class="atlas-story-kicker">${escHtml(t('НОВАЯ ПОДСКАЗКА','NEW CLUE'))}</div>
+        <div class="atlas-fact">${escHtml(fact)}</div>
+      `;
+    }
+  });
+}
+
+function renderAtlas(){
+  buildAtlasTabs();
+  const input=document.getElementById('atlas-search');
+  if(input)input.placeholder=t('Найти страну, столицу или факт...','Search a country, capital, or fact...');
+  const ids=getAtlasCountries();
+  if(!atlasSelectedId || !ids.includes(atlasSelectedId))atlasSelectedId=ids[0]||null;
+  renderAtlasFeatured();
+  renderAtlasList(ids);
+  renderAtlasDetail(atlasSelectedId);
+}
+
+function openAtlas(){
+  atlasRegion='world';
+  atlasQuery='';
+  atlasSelectedId=null;
+  const input=document.getElementById('atlas-search');
+  if(input){
+    input.value='';
+    input.oninput=()=>{atlasQuery=input.value;renderAtlas();};
+  }
+  document.getElementById('panel-atlas').classList.add('show');
+  renderAtlas();
 }
 
 function syncSoundButtons(){
@@ -2504,6 +2750,7 @@ function applyLanguageToUI(){
   if(typeof renderRegionButtons==='function') renderRegionButtons('#mp-reg-g .rb');
   if(typeof refreshDailyUI==='function') refreshDailyUI();
   if(typeof refreshAuthUI==='function') refreshAuthUI();
+  if(document.getElementById('panel-atlas')?.classList.contains('show') && typeof renderAtlas==='function') renderAtlas();
   syncSoundButtons();
 }
 
