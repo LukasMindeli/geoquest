@@ -240,6 +240,8 @@ function localizedCountryName(id,code=window.lang){
 window.cName=function(id){return localizedCountryName(id);};
 window.capName=function(id){if(!CAPITALS[id])return"?";return normalizeLangCode(window.lang)==="ru"?CAPITALS[id][0]:CAPITALS[id][1];};
 window.localizedCountryName=localizedCountryName;
+window.BIG_C=new Set([643,840,36,76,124,156,356]);
+window.SMALL_C=new Set([56,196,442,705,703,191,372,376,51,470,492,438]);
 
 window.COUNTRY_NAME_TO_ID={};
 function normalizeAnswer(value){
