@@ -808,10 +808,21 @@ let gst='menu',soloMode='click',soloReg='world';
 let activePool=[],score=0,lives=LIVES,streak=0,qIdx=0,targId=null;
 let timeLeft=0,tid=null,cok=false,prog=[],best=0;
 let soloPendingSteps=[];
+let soloIdleSpinUntil=0,soloIdleSpinSpeed=0;
 
 function clearSoloPendingSteps(){
   soloPendingSteps.forEach(id=>clearTimeout(id));
   soloPendingSteps=[];
+}
+
+function stopSoloIdleSpin(){
+  soloIdleSpinUntil=0;
+  soloIdleSpinSpeed=0;
+}
+
+function beginSoloIdleSpin(durationMs=1000,speed=.0065){
+  soloIdleSpinUntil=performance.now()+durationMs;
+  soloIdleSpinSpeed=speed;
 }
 
 function scheduleSoloStep(fn,delay){
@@ -826,6 +837,7 @@ function scheduleSoloStep(fn,delay){
 
 function resetSoloTransientUi(){
   clearSoloPendingSteps();
+  stopSoloIdleSpin();
   clearInterval(tid);
   tid=null;
   gst='over';
@@ -935,11 +947,13 @@ function startSolo(){
   activePool=shuffled(rpool(soloReg,soloMode));
   if(activePool.length<2){alert(t('В этом регионе слишком мало стран!','Not enough countries in this region!'));return;}
   score=0;lives=LIVES;streak=0;qIdx=0;prog=new Array(Math.min(curQS,activePool.length)).fill(null);
+  clearSoloPendingSteps();
+  stopSoloIdleSpin();
   showScreen('solo');
   document.getElementById('hud').classList.add('show');
   document.getElementById('type-wrap').style.display=(soloMode==='type'||soloMode==='capital')?'block':'none';
   // zoom out before game starts
-  camTargetZ=5.8;camAnimating=true;
+  camTargetY=G.rotation.y;camTargetX=G.rotation.x;camTargetZ=5.8;camAnimating=true;vel={x:0,y:0};
   buildDots();updHUD();nextQ();
 }
 
@@ -997,6 +1011,8 @@ document.getElementById('tinput').addEventListener('keydown',e=>{
   }
 });
 function sGood(){
+  clearSoloPendingSteps();
+  stopSoloIdleSpin();
   const curQS=getSoloQuestionCount();
   const b=timeLeft*6+streak*15;score+=120+b;streak++;
   profileData.maxStreak=Math.max(profileData.maxStreak||0,streak);
@@ -1004,6 +1020,8 @@ function sGood(){
   qIdx++;if(qIdx>=curQS)scheduleSoloStep(()=>endSolo(true),1100);else scheduleSoloStep(()=>nextQ(),1100);
 }
 function sBad(nm){
+  clearSoloPendingSteps();
+  stopSoloIdleSpin();
   lives--;streak=0;profileData.flagStreak=0;prog[qIdx]='bad';
   recordStat('wrong',targId);
   const hint=soloMode==='capital'?t('Столица: ','Capital: ')+capName(targId):t('Ответ: ','Answer: ')+nm;
@@ -1011,6 +1029,8 @@ function sBad(nm){
   if(lives<=0){scheduleSoloStep(()=>endSolo(false),1600);return;}qIdx++;scheduleSoloStep(()=>nextQ(),1900);
 }
 function onTimeout(nm){
+  clearSoloPendingSteps();
+  stopSoloIdleSpin();
   prog[qIdx]='bad';lives--;streak=0;profileData.flagStreak=0;
   recordStat('wrong',targId);
   setOverlay(targId,0xff3344,.35);
@@ -1129,6 +1149,42 @@ function rotateToCountry(id,zoomZ=3.8){
   if(!centroids[id])return;
   const cd=centroids[id].userData;
   rotateTo(cd.lat,cd.lng,zoomZ);
+}
+
+function snapTo(lat,lng,zoomZ=5.8){
+  const theta=(lng+180)*Math.PI/180;
+  let tY=Math.PI/2-theta;
+  const tX=Math.max(-1.3, Math.min(1.3, lat*Math.PI/180));
+  while(tY-G.rotation.y > Math.PI)  tY-=2*Math.PI;
+  while(tY-G.rotation.y < -Math.PI) tY+=2*Math.PI;
+  G.rotation.y=tY;
+  G.rotation.x=tX;
+  camera.position.z=zoomZ;
+  camTargetY=tY;
+  camTargetX=tX;
+  camTargetZ=null;
+  camAnimating=false;
+  vel={x:0,y:0};
+}
+
+function snapToCountry(id,zoomZ=3.8){
+  if(!centroids[id])return;
+  const cd=centroids[id].userData;
+  snapTo(cd.lat,cd.lng,zoomZ);
+}
+
+function focusSoloCountry(id,zoomZ=3.8,delay=0,spinBefore=false,snap=false){
+  if(!centroids[id])return;
+  stopSoloIdleSpin();
+  if(delay>0 && spinBefore)beginSoloIdleSpin(delay,.0065);
+  const run=()=>{
+    if(currentScreen!=='solo' || targId!==id)return;
+    stopSoloIdleSpin();
+    if(snap) snapToCountry(id,zoomZ);
+    else rotateToCountry(id,zoomZ);
+  };
+  if(delay>0){scheduleSoloStep(run,delay);return;}
+  run();
 }
 
 function getMpRevealAnswer(mode,id){
@@ -1754,7 +1810,7 @@ let camTargetY=null, camTargetX=null, camTargetZ=null, camAnimating=false;
 function rotateTo(lat, lng, zoomZ=5.8){
   const theta=(lng+180)*Math.PI/180;
   let tY=Math.PI/2-theta;
-  const tX=Math.max(-1.3, Math.min(1.3, -lat*Math.PI/180));
+  const tX=Math.max(-1.3, Math.min(1.3, lat*Math.PI/180));
   while(tY-G.rotation.y > Math.PI)  tY-=2*Math.PI;
   while(tY-G.rotation.y < -Math.PI) tY+=2*Math.PI;
   camTargetY=tY; camTargetX=tX; camTargetZ=zoomZ; camAnimating=true;
@@ -1768,11 +1824,11 @@ function animate(){
   requestAnimationFrame(animate);
   if(camAnimating && !drag){
     const dy=camTargetY-G.rotation.y, dx=camTargetX-G.rotation.x;
-    G.rotation.y+=dy*0.06;
-    G.rotation.x+=dx*0.06;
+    G.rotation.y+=dy*0.12;
+    G.rotation.x+=dx*0.12;
     if(camTargetZ!==null){
       const dz=camTargetZ-camera.position.z;
-      camera.position.z+=dz*0.06;
+      camera.position.z+=dz*0.12;
       if(Math.abs(dz)<0.01)camTargetZ=null;
     }
     if(Math.abs(dy)<0.002 && Math.abs(dx)<0.002){
@@ -1781,6 +1837,7 @@ function animate(){
   } else if(!drag){
     G.rotation.y+=vel.y;G.rotation.x=Math.max(-1.3,Math.min(1.3,G.rotation.x+vel.x));
     vel.x*=.91;vel.y*=.91;
+    if(currentScreen==='solo' && performance.now()<soloIdleSpinUntil)G.rotation.y+=soloIdleSpinSpeed;
     if(currentScreen==='menu'||currentScreen==='mp-setup')G.rotation.y+=.0008;
   }
   updateLabels();
@@ -1825,6 +1882,8 @@ function flagUrl(id){
 function nextQ(){
   const curQS=getSoloQuestionCount();
   if(qIdx>=curQS){endSolo(true);return;}
+  clearSoloPendingSteps();
+  stopSoloIdleSpin();
   hideAllOv();clearHov();hideMcPanel();tip.style.display='none';
   document.getElementById('solo-flag-display').style.display='none';
   document.getElementById('solo-flag-img').src='';
@@ -1848,7 +1907,7 @@ function nextQ(){
     if(!lm){qIdx++;nextQ();return;}
     document.getElementById('mode-lbl').textContent=t('В КАКОЙ СТРАНЕ ЭТА ДОСТОПРИМЕЧАТЕЛЬНОСТЬ?','WHICH COUNTRY HAS THIS LANDMARK?');
     document.getElementById('tname').innerHTML=`<span style="font-size:40px;display:block;margin-bottom:4px">${lm.img}</span><span style="font-size:clamp(13px,2vw,20px)">${lang==='ru'?lm.name:lm.nameEn}</span>`;
-    if(centroids[targId]){const cd=centroids[targId].userData;rotateTo(cd.lat,cd.lng,4);}
+    focusSoloCountry(targId,3.4,1000,false,true);
     const choices=getMcChoices('landmark',targId);
     const T=TB;clearInterval(tid);timeLeft=T;syncTimer(T);
     tid=setInterval(()=>{timeLeft--;syncTimer(T);if(timeLeft<=0){clearInterval(tid);onMcTimeout(nm);}},1000);
@@ -1862,7 +1921,7 @@ function nextQ(){
     document.getElementById('mode-lbl').textContent=t('КТО РУКОВОДИТ ЭТОЙ СТРАНОЙ?','WHO LEADS THIS COUNTRY?');
     document.getElementById('tname').textContent=nm.toUpperCase();
     setOverlay(targId,0x44aaff,.25);
-    if(centroids[targId]){const cd=centroids[targId].userData;rotateTo(cd.lat,cd.lng,3.5);}
+    focusSoloCountry(targId,3.25,1000,false,true);
     const choices=getMcChoices('leader',targId);
     const correctName=lang==='ru'?ldr.name:ldr.nameEn;
     const T=TB;clearInterval(tid);timeLeft=T;syncTimer(T);
@@ -1877,7 +1936,7 @@ function nextQ(){
     document.getElementById('mode-lbl').textContent=t('РЕЛИГИЯ ЭТОЙ СТРАНЫ?','MAIN RELIGION OF THIS COUNTRY?');
     document.getElementById('tname').textContent=nm.toUpperCase();
     setOverlay(targId,0xffaa00,.25);
-    if(centroids[targId]){const cd=centroids[targId].userData;rotateTo(cd.lat,cd.lng,3.5);}
+    focusSoloCountry(targId,3.25,1000,false,true);
     const choices=getMcChoices('religion',targId);
     const T=TB;clearInterval(tid);timeLeft=T;syncTimer(T);
     tid=setInterval(()=>{timeLeft--;syncTimer(T);if(timeLeft<=0){clearInterval(tid);onMcTimeout(rel);}},1000);
@@ -1896,7 +1955,7 @@ function nextQ(){
     setOverlay(targId,0x44aaff,.32);
     const inp=document.getElementById('tinput');inp.value='';inp.className='';setTimeout(()=>inp.focus(),50);
     document.getElementById('mode-lbl').textContent=t('КАК НАЗЫВАЕТСЯ ЭТА СТРАНА?','WHAT COUNTRY IS THIS?');
-    if(centroids[targId]){const cd=centroids[targId].userData;rotateTo(cd.lat,cd.lng,3.5);}
+    focusSoloCountry(targId,3.25,0,false,true);
   } else if(soloMode==='capital'){
     document.getElementById('tname').textContent=nm.toUpperCase();
     document.getElementById('type-wrap').style.display='block';
@@ -1904,7 +1963,7 @@ function nextQ(){
     setOverlay(targId,0xffaa00,.32);
     const inp=document.getElementById('tinput');inp.value='';inp.className='';setTimeout(()=>inp.focus(),50);
     document.getElementById('mode-lbl').textContent=t('СТОЛИЦА ЭТОЙ СТРАНЫ?','WHAT IS THE CAPITAL?');
-    if(centroids[targId]){const cd=centroids[targId].userData;rotateTo(cd.lat,cd.lng,3.5);}
+    focusSoloCountry(targId,3.25,0,false,true);
   } else if(soloMode==='flag'){
     document.getElementById('tname').textContent='';
     document.getElementById('type-wrap').style.display='block';
@@ -1913,6 +1972,7 @@ function nextQ(){
     if(url){document.getElementById('solo-flag-img').src=url;document.getElementById('solo-flag-display').style.display='block';}
     document.getElementById('mode-lbl').textContent=t('ЧЬЙ ЭТО ФЛАГ?','WHOSE FLAG IS THIS?');
     const inp=document.getElementById('tinput');inp.value='';inp.className='';setTimeout(()=>inp.focus(),50);
+    focusSoloCountry(targId,3.25,1000,true,true);
   }
 
   const T=soloMode==='click'?TA:TB;
@@ -1922,6 +1982,8 @@ function nextQ(){
 }
 
 function onMcTimeout(correctAnswer){
+  clearSoloPendingSteps();
+  stopSoloIdleSpin();
   prog[qIdx]='bad';lives--;streak=0;
   setOverlay(targId,0xff3344,.35);
   showHint(t('Ответ: ','Answer: ')+correctAnswer);
