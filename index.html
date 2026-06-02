@@ -16,7 +16,7 @@
 <link rel="shortcut icon" type="image/png" href="/favicon.png">
 <link rel="apple-touch-icon" href="/favicon.png">
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/app.css?v=20260602-mobile">
+<link rel="stylesheet" href="assets/css/app.css?v=20260602-features">
 
 </head>
 <body>
@@ -92,6 +92,7 @@
         <button class="mode-pill" data-mm-mode="landmark">🗺️ Достопримечательности</button>
         <button class="mode-pill" data-mm-mode="leader">👑 Лидер страны</button>
         <button class="mode-pill" data-mm-mode="religion">🕌 Религия</button>
+        <button class="mode-pill" data-mm-mode="fact">💡 Угадай по факту</button>
       </div>
     </div>
     <div id="mm-region-step" class="flow-step">
@@ -155,7 +156,10 @@
       <div class="ad-label">Sponsored</div>
       <div class="ad-slot"></div>
     </div>
-    <select id="lang-select" aria-label="Language" style="width:100%;padding:10px;background:transparent;border:1px solid var(--border);color:var(--muted);font-family:'Space Mono',monospace;font-size:10px;letter-spacing:2px;cursor:pointer;margin-top:4px;transition:all .2s;text-transform:uppercase;"></select>
+    <div class="menu-tools">
+      <select id="lang-select" aria-label="Language" style="width:100%;padding:10px;background:transparent;border:1px solid var(--border);color:var(--muted);font-family:'Space Mono',monospace;font-size:10px;letter-spacing:2px;cursor:pointer;margin-top:4px;transition:all .2s;text-transform:uppercase;"></select>
+      <button id="sound-toggle" class="sound-toggle" type="button" onclick="toggleSound()">🔊 SOUND</button>
+    </div>
     <div class="mm-legal">
       <a href="/privacy.html">Privacy</a>
       <span>•</span>
@@ -180,6 +184,7 @@
         <button class="mode-pill" data-mode="landmark">🗺️ Угадай достопримечательность</button>
         <button class="mode-pill" data-mode="leader">👑 Угадай лидера страны</button>
         <button class="mode-pill" data-mode="religion">🕌 Угадай религию</button>
+        <button class="mode-pill" data-mode="fact">💡 Угадай по факту</button>
       </div>
     </div>
 
@@ -336,6 +341,8 @@
     <div class="rs" id="rscore">0</div>
     <div class="rst" id="rstats"></div>
     <div class="rb3" id="rbest"></div>
+    <div id="result-rank-card" class="result-rank-card" style="display:none"></div>
+    <div id="country-card" class="country-card" style="display:none"></div>
     <!-- LB submit inline -->
     <div id="result-lb-wrap" style="margin-bottom:16px;padding:14px;border:1px solid rgba(79,255,176,.2);background:rgba(79,255,176,.04);display:none">
       <div style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--accent);margin-bottom:10px">🏆 ПОПАСТЬ В РЕЙТИНГ</div>
@@ -363,6 +370,7 @@
 <!-- FLASH -->
 <div id="flash"><div id="ftxt"></div></div>
 <div id="hint"></div>
+<div id="country-pop"></div>
 
 <!-- Multiple choice answers panel -->
 <div id="mc-panel" style="position:fixed;bottom:60px;left:50%;transform:translateX(-50%);z-index:15;display:none;width:min(520px,96vw);pointer-events:all;">
@@ -436,6 +444,15 @@
     <div class="prof-name-row">
       <input id="prof-name-input" type="text" placeholder="Твоё имя…" maxlength="20" inputmode="text" autocapitalize="words"/>
       <button class="prof-save" id="prof-save-btn">Сохранить</button>
+    </div>
+    <div class="rank-card" id="rank-card">
+      <div class="rank-icon" id="rank-icon">🌱</div>
+      <div class="rank-body">
+        <div class="rank-label">Ранг игрока</div>
+        <div class="rank-name" id="rank-name">Новичок</div>
+        <div class="rank-progress"><div id="rank-fill"></div></div>
+        <div class="rank-next" id="rank-next">Играй, чтобы открыть следующий ранг</div>
+      </div>
     </div>
     <div class="stat-grid">
       <div class="stat-card"><div class="sc-val" id="prof-games">0</div><div class="sc-lbl">ИГР</div></div>
@@ -530,7 +547,7 @@
 <script src="assets/js/constants.js"></script>
 <script src="assets/js/core/firebase-auth-chat.js?v=20260602-mobile"></script>
 <script src="assets/js/core/matchmaking.js"></script>
-<script src="assets/js/core/profile-storage.js"></script>
+<script src="assets/js/core/profile-storage.js?v=20260602-features"></script>
 <script src="assets/js/core/achievements.js"></script>
 <script src="assets/js/core/daily-challenge.js"></script>
 <script src="assets/js/core/leaderboard.js"></script>
@@ -904,6 +921,7 @@ function resetSoloTransientUi(){
   inp.className='';
   document.getElementById('hint').className='';
   document.getElementById('flash').className='';
+  hideCountryPop();
 }
 
 const MODE_LABELS = {
@@ -913,7 +931,8 @@ const MODE_LABELS = {
   flag:{ru:'🚩 Угадай флаг', en:'🚩 Guess the flag'},
   landmark:{ru:'🗺️ Достопримечательности', en:'🗺️ Landmarks'},
   leader:{ru:'👑 Лидер страны', en:'👑 Country leader'},
-  religion:{ru:'🕌 Религия', en:'🕌 Religion'}
+  religion:{ru:'🕌 Религия', en:'🕌 Religion'},
+  fact:{ru:'💡 Угадай по факту', en:'💡 Guess by fact'}
 };
 
 const SOLO_MODE_BUTTON_LABELS = {
@@ -923,7 +942,8 @@ const SOLO_MODE_BUTTON_LABELS = {
   flag:{ru:'🚩 Угадай флаг', en:'🚩 Guess the flag'},
   landmark:{ru:'🗺️ Угадай достопримечательность', en:'🗺️ Guess the landmark'},
   leader:{ru:'👑 Угадай лидера страны', en:'👑 Guess the country leader'},
-  religion:{ru:'🕌 Угадай религию', en:'🕌 Guess the religion'}
+  religion:{ru:'🕌 Угадай религию', en:'🕌 Guess the religion'},
+  fact:{ru:'💡 Угадай по факту', en:'💡 Guess by fact'}
 };
 
 const DIFF_LABELS = {
@@ -983,6 +1003,7 @@ function modeSupportsCountry(mode,id){
   if(mode==='landmark') return !!LANDMARKS[id];
   if(mode==='leader') return !!LEADERS[id];
   if(mode==='religion') return !!RELIGIONS[id];
+  if(mode==='fact') return !!getCountryFacts(id).length;
   return true;
 }
 function rpool(reg,mode=soloMode){
@@ -1072,7 +1093,8 @@ function sGood(){
   const b=timeLeft*6+streak*15;score+=120+b;streak++;
   profileData.maxStreak=Math.max(profileData.maxStreak||0,streak);
   prog[qIdx]='ok';setOverlay(targId,0x00ee77,.4);flash(true,'✓');updHUD();
-  qIdx++;if(qIdx>=curQS)scheduleSoloStep(()=>endSolo(true),1100);else scheduleSoloStep(()=>nextQ(),1100);
+  showCountryPop(targId);
+  qIdx++;if(qIdx>=curQS)scheduleSoloStep(()=>endSolo(true),1800);else scheduleSoloStep(()=>nextQ(),1800);
 }
 function sBad(nm){
   clearSoloPendingSteps();
@@ -1081,7 +1103,8 @@ function sBad(nm){
   recordStat('wrong',targId);
   const hint=soloMode==='capital'?t('Столица: ','Capital: ')+capName(targId):t('Ответ: ','Answer: ')+nm;
   showHint(hint);flash(false,'✗');updHUD();
-  if(lives<=0){scheduleSoloStep(()=>endSolo(false),1600);return;}qIdx++;scheduleSoloStep(()=>nextQ(),1900);
+  showCountryPop(targId);
+  if(lives<=0){scheduleSoloStep(()=>endSolo(false),2000);return;}qIdx++;scheduleSoloStep(()=>nextQ(),2300);
 }
 function onTimeout(nm){
   clearSoloPendingSteps();
@@ -1091,12 +1114,14 @@ function onTimeout(nm){
   setOverlay(targId,0xff3344,.35);
   const hint=soloMode==='capital'?t('Столица: ','Capital: ')+capName(targId):t('Ответ: ','Answer: ')+nm;
   showHint(hint);flash(false,'⏱');updHUD();
-  if(lives<=0){scheduleSoloStep(()=>endSolo(false),1600);return;}qIdx++;scheduleSoloStep(()=>nextQ(),1900);
+  showCountryPop(targId);
+  if(lives<=0){scheduleSoloStep(()=>endSolo(false),2000);return;}qIdx++;scheduleSoloStep(()=>nextQ(),2300);
 }
 function showHint(t){const h=document.getElementById('hint');h.textContent=t;h.className='show';setTimeout(()=>h.className='',2800);}
-function flash(ok,t){const e=document.getElementById('flash');document.getElementById('ftxt').textContent=t;e.className=ok?'fc':'fw';setTimeout(()=>e.className='',900);}
+function flash(ok,t){playSound(ok?'correct':'wrong');const e=document.getElementById('flash');document.getElementById('ftxt').textContent=t;e.className=ok?'fc':'fw';setTimeout(()=>e.className='',900);}
 function endSolo(won){
   resetSoloTransientUi();
+  playSound(won?'win':'end');
   document.getElementById('hud').classList.remove('show');
   if(score>best)best=score;
   const ok=prog.filter(p=>p==='ok').length;
@@ -1114,6 +1139,8 @@ function endSolo(won){
   if(soloMode==='capital'&&won&&lives===LIVES)profileData.capitalPerfect=(profileData.capitalPerfect||0)+1;
   if(window.finishDailyRun) finishDailyRun(score);
   saveProfile();checkAchievements();
+  renderResultRankCard();
+  renderResultCountryCard(targId);
   // LB submit UI
   const wrap=document.getElementById('result-lb-wrap');
   if(wrap){
@@ -1171,6 +1198,7 @@ function resetMpQuestionUi(){
   const inp=document.getElementById('tinput');
   inp.value='';
   inp.className='';
+  hideCountryPop();
 }
 
 function resetMpGameplayState(){
@@ -1280,6 +1308,7 @@ function finishLiveMpSuccess(){
   mpMyScore+=pts;
   if(mpFindTargetId)setOverlay(mpFindTargetId,0x00ee77,.4);
   flash(true,'✓');
+  showCountryPop(mpFindTargetId);
   updMpScores();
   send({type:'found',pts});
   scheduleMpStep(()=>{mpRound++;nextMpRound();},1600);
@@ -1291,6 +1320,7 @@ function finishLiveMpFailure(reason='timeout',clickedId=null){
   const answer=getMpRevealAnswer(mpFindMode,mpFindTargetId);
   if(answer)document.getElementById('mp-sel-hint').textContent=t('Ответ: ','Answer: ')+answer;
   flash(false,reason==='wrong'?'✗':'⏱');
+  showCountryPop(mpFindTargetId);
   send({type:'timeout'});
   scheduleMpStep(()=>{mpRound++;nextMpRound();},2000);
 }
@@ -1348,6 +1378,14 @@ function startMpFindingRound(targetId,mode,name,handlers={}){
     document.getElementById('mp-role').textContent=t('РЕЖИМ: ИЩЕШЬ СТРАНУ','MODE: FIND THE COUNTRY');
     setMpInstructionText(nm.toUpperCase());
     document.getElementById('mp-sel-hint').textContent=t('Найди эту страну на глобусе!','Find this country on the globe!');
+    startMpRoundTimer(()=>mpOnFindFailure?.('timeout'));
+    return;
+  }
+
+  if(mpFindMode==='fact'){
+    document.getElementById('mp-role').textContent=t('РЕЖИМ: ФАКТ','MODE: FACT CLUE');
+    setMpInstructionHtml(`<span class="fact-clue">${escHtml(pickCountryFact(mpFindTargetId))}</span>`);
+    document.getElementById('mp-sel-hint').textContent=t('Найди страну, о которой этот факт','Find the country described by the fact');
     startMpRoundTimer(()=>mpOnFindFailure?.('timeout'));
     return;
   }
@@ -1636,7 +1674,7 @@ function mpClick(cid){
       (mpOnSelectConfirm||confirmChallenge)(cid,nm,soloMode);
     };
   } else if(mpState==='finding'){
-    if(mpFindMode!=='click')return;
+    if(mpFindMode!=='click'&&mpFindMode!=='fact')return;
     clearInterval(mpTid);mpTid=null;mpState='done';
     if(cid===mpFindTargetId){
       mpOnFindSuccess?.();
@@ -1929,6 +1967,217 @@ function flagUrl(id){
   return code?`https://flagcdn.com/w160/${code}.png`:null;
 }
 
+const COUNTRY_EXTRA_INFO={
+  840:{population:'~335 млн',language:'Английский',currency:'Доллар США'},
+  124:{population:'~40 млн',language:'Английский, французский',currency:'Канадский доллар'},
+  484:{population:'~129 млн',language:'Испанский',currency:'Мексиканское песо'},
+  76:{population:'~203 млн',language:'Португальский',currency:'Бразильский реал'},
+  32:{population:'~46 млн',language:'Испанский',currency:'Аргентинское песо'},
+  152:{population:'~20 млн',language:'Испанский',currency:'Чилийское песо'},
+  604:{population:'~34 млн',language:'Испанский',currency:'Перуанский соль'},
+  826:{population:'~68 млн',language:'Английский',currency:'Фунт стерлингов'},
+  250:{population:'~68 млн',language:'Французский',currency:'Евро'},
+  276:{population:'~84 млн',language:'Немецкий',currency:'Евро'},
+  380:{population:'~59 млн',language:'Итальянский',currency:'Евро'},
+  724:{population:'~48 млн',language:'Испанский',currency:'Евро'},
+  620:{population:'~10 млн',language:'Португальский',currency:'Евро'},
+  616:{population:'~38 млн',language:'Польский',currency:'Польский злотый'},
+  804:{population:'~37 млн',language:'Украинский',currency:'Гривна'},
+  643:{population:'~146 млн',language:'Русский',currency:'Российский рубль'},
+  792:{population:'~85 млн',language:'Турецкий',currency:'Турецкая лира'},
+  300:{population:'~10 млн',language:'Греческий',currency:'Евро'},
+  528:{population:'~18 млн',language:'Нидерландский',currency:'Евро'},
+  752:{population:'~10 млн',language:'Шведский',currency:'Шведская крона'},
+  578:{population:'~5 млн',language:'Норвежский',currency:'Норвежская крона'},
+  246:{population:'~6 млн',language:'Финский, шведский',currency:'Евро'},
+  51:{population:'~3 млн',language:'Армянский',currency:'Армянский драм'},
+  31:{population:'~10 млн',language:'Азербайджанский',currency:'Азербайджанский манат'},
+  268:{population:'~4 млн',language:'Грузинский',currency:'Грузинский лари'},
+  156:{population:'~1,4 млрд',language:'Китайский',currency:'Юань'},
+  356:{population:'~1,4 млрд',language:'Хинди, английский',currency:'Индийская рупия'},
+  392:{population:'~124 млн',language:'Японский',currency:'Иена'},
+  410:{population:'~52 млн',language:'Корейский',currency:'Южнокорейская вона'},
+  360:{population:'~279 млн',language:'Индонезийский',currency:'Индонезийская рупия'},
+  764:{population:'~72 млн',language:'Тайский',currency:'Тайский бат'},
+  704:{population:'~100 млн',language:'Вьетнамский',currency:'Вьетнамский донг'},
+  682:{population:'~36 млн',language:'Арабский',currency:'Саудовский риял'},
+  376:{population:'~10 млн',language:'Иврит, арабский',currency:'Новый израильский шекель'},
+  364:{population:'~89 млн',language:'Персидский',currency:'Иранский риал'},
+  818:{population:'~112 млн',language:'Арабский',currency:'Египетский фунт'},
+  710:{population:'~62 млн',language:'11 официальных языков',currency:'Южноафриканский ранд'},
+  566:{population:'~224 млн',language:'Английский',currency:'Нигерийская найра'},
+  404:{population:'~55 млн',language:'Суахили, английский',currency:'Кенийский шиллинг'},
+  231:{population:'~126 млн',language:'Амхарский',currency:'Эфиопский быр'},
+  504:{population:'~37 млн',language:'Арабский, берберские языки',currency:'Марокканский дирхам'},
+  36:{population:'~27 млн',language:'Английский',currency:'Австралийский доллар'},
+  554:{population:'~5 млн',language:'Английский, маори',currency:'Новозеландский доллар'}
+};
+
+const REGION_INFO_FALLBACK={
+  europe:{language:'языки Европы',currency:'евро и местные валюты'},
+  asia:{language:'языки Азии',currency:'местные валюты Азии'},
+  americas:{language:'языки Америки',currency:'доллары, песо и местные валюты'},
+  africa:{language:'языки Африки',currency:'местные валюты Африки'},
+  oceania:{language:'английский и местные языки',currency:'доллары и местные валюты'},
+  world:{language:'местные языки',currency:'местная валюта'}
+};
+
+let countryPopTimer=null;
+let audioCtx=null;
+let soundEnabled=true;
+try{soundEnabled=localStorage.getItem('wow_sound')!=='0';}catch(_){}
+
+function escHtml(value){
+  return String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+}
+
+function getCountryFlagMarkup(id){
+  const url=flagUrl(id);
+  if(url)return `<img src="${escHtml(url)}" alt="${escHtml(cName(id))} flag" loading="lazy">`;
+  return '🌍';
+}
+
+function getCountryExtra(id){
+  const c=COUNTRIES[id]||{};
+  const fallback=REGION_INFO_FALLBACK[c.r]||REGION_INFO_FALLBACK.world;
+  return Object.assign({population:t('данные уточняются','data pending'),language:fallback.language,currency:fallback.currency},COUNTRY_EXTRA_INFO[id]||{});
+}
+
+function countryFact(label,value){
+  return `<div class="country-fact"><b>${escHtml(label)}</b><br>${escHtml(value||'—')}</div>`;
+}
+
+function renderCountryInfoHtml(id,compact=false){
+  if(!COUNTRIES[id])return '';
+  const extra=getCountryExtra(id);
+  const region=getRegionPlainLabel(COUNTRIES[id].r||'world');
+  const capital=capName(id);
+  const religion=RELIGIONS[id]?localizedReligionName(RELIGIONS[id]):t('данные уточняются','data pending');
+  const facts=[
+    countryFact(t('Столица','Capital'),capital),
+    countryFact(t('Население','Population'),extra.population),
+    countryFact(t('Язык','Language'),extra.language),
+    countryFact(t('Валюта','Currency'),extra.currency)
+  ];
+  if(!compact)facts.push(countryFact(t('Религия','Religion'),religion));
+  return `
+    <div class="country-mini-head">
+      <div class="country-flag">${getCountryFlagMarkup(id)}</div>
+      <div>
+        <div class="country-name">${escHtml(cName(id))}</div>
+        <div class="country-region">${escHtml(region)}</div>
+      </div>
+    </div>
+    <div class="country-facts">${facts.join('')}</div>
+  `;
+}
+
+function hideCountryPop(){
+  clearTimeout(countryPopTimer);
+  const el=document.getElementById('country-pop');
+  if(el)el.className='';
+}
+
+function showCountryPop(id){
+  const el=document.getElementById('country-pop');
+  if(!el||!COUNTRIES[id])return;
+  el.innerHTML=renderCountryInfoHtml(id,true);
+  el.className='show';
+  clearTimeout(countryPopTimer);
+  countryPopTimer=setTimeout(()=>{el.className='';},3600);
+}
+
+function renderResultCountryCard(id){
+  const card=document.getElementById('country-card');
+  if(!card)return;
+  if(!COUNTRIES[id]){card.style.display='none';card.innerHTML='';return;}
+  card.innerHTML=renderCountryInfoHtml(id,false);
+  card.style.display='block';
+}
+
+function renderResultRankCard(){
+  const card=document.getElementById('result-rank-card');
+  const rankFn=window.getPlayerRank;
+  if(!card||typeof rankFn!=='function'){if(card)card.style.display='none';return;}
+  const rank=rankFn();
+  card.innerHTML=`
+    <div class="result-rank-title">${escHtml(t('ТВОЙ РАНГ','YOUR RANK'))}</div>
+    <div class="result-rank-name">${escHtml(rank.icon)} ${escHtml(rank.name)}</div>
+    <div class="result-rank-note">${escHtml(rank.nextLabel)}</div>
+  `;
+  card.style.display='block';
+}
+
+function getCountryFacts(id){
+  if(!COUNTRIES[id])return [];
+  const c=COUNTRIES[id];
+  const extra=getCountryExtra(id);
+  const facts=[];
+  if(CAPITALS[id])facts.push(t(`Столица этой страны — ${capName(id)}.`,`The capital of this country is ${capName(id)}.`));
+  if(LANDMARKS[id]){
+    const lm=LANDMARKS[id];
+    facts.push(t(`Здесь находится ${lm.name}.`,`This country has ${lm.nameEn}.`));
+  }
+  if(RELIGIONS[id])facts.push(t(`Одна из главных религий — ${localizedReligionName(RELIGIONS[id])}.`,`One of the main religions is ${localizedReligionName(RELIGIONS[id])}.`));
+  if(extra.currency)facts.push(t(`Здесь используют валюту: ${extra.currency}.`,`Its currency is ${extra.currency}.`));
+  if(extra.language)facts.push(t(`Один из языков: ${extra.language}.`,`One language clue: ${extra.language}.`));
+  facts.push(t(`Регион: ${getRegionPlainLabel(c.r||'world')}.`,`Region: ${getRegionPlainLabel(c.r||'world')}.`));
+  return facts;
+}
+
+function pickCountryFact(id){
+  const facts=getCountryFacts(id);
+  return facts.length?facts[Math.floor(Math.random()*facts.length)]:cName(id);
+}
+
+function syncSoundButtons(){
+  const btn=document.getElementById('sound-toggle');
+  if(!btn)return;
+  btn.textContent=soundEnabled?'🔊 SOUND':'🔇 SOUND';
+  btn.setAttribute('aria-pressed',soundEnabled?'true':'false');
+}
+
+function toggleSound(){
+  soundEnabled=!soundEnabled;
+  try{localStorage.setItem('wow_sound',soundEnabled?'1':'0');}catch(_){}
+  syncSoundButtons();
+  if(soundEnabled)playSound('round');
+}
+
+function getAudioContext(){
+  if(!soundEnabled)return null;
+  const AudioContextCtor=window.AudioContext||window.webkitAudioContext;
+  if(!AudioContextCtor)return null;
+  if(!audioCtx)audioCtx=new AudioContextCtor();
+  if(audioCtx.state==='suspended')audioCtx.resume().catch(()=>{});
+  return audioCtx;
+}
+
+function tone(freq,duration=0.08,delay=0,type='sine',gain=.045){
+  const ctx=getAudioContext();
+  if(!ctx)return;
+  const osc=ctx.createOscillator();
+  const env=ctx.createGain();
+  osc.type=type;
+  osc.frequency.setValueAtTime(freq,ctx.currentTime+delay);
+  env.gain.setValueAtTime(0,ctx.currentTime+delay);
+  env.gain.linearRampToValueAtTime(gain,ctx.currentTime+delay+.01);
+  env.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+delay+duration);
+  osc.connect(env).connect(ctx.destination);
+  osc.start(ctx.currentTime+delay);
+  osc.stop(ctx.currentTime+delay+duration+.02);
+}
+
+function playSound(kind){
+  if(!soundEnabled)return;
+  if(kind==='correct'){tone(520,.07,0,'triangle');tone(780,.09,.07,'triangle');return;}
+  if(kind==='wrong'){tone(180,.12,0,'sawtooth',.035);tone(120,.14,.07,'sawtooth',.028);return;}
+  if(kind==='win'){tone(440,.08,0,'triangle');tone(660,.08,.08,'triangle');tone(880,.16,.16,'triangle');return;}
+  if(kind==='end'){tone(260,.12,0,'sine');tone(190,.14,.1,'sine');return;}
+  tone(330,.055,0,'sine',.03);
+  tone(440,.06,.055,'sine',.025);
+}
+
 // ═══════════════════════════════════════════════════════════════
 //  FLAG MODE in SOLO
 // ═══════════════════════════════════════════════════════════════
@@ -1939,6 +2188,7 @@ function nextQ(){
   clearSoloPendingSteps();
   stopSoloIdleSpin();
   hideAllOv();clearHov();hideMcPanel();tip.style.display='none';
+  hideCountryPop();
   document.getElementById('solo-flag-display').style.display='none';
   document.getElementById('solo-flag-img').src='';
   document.getElementById('type-wrap').style.display='none';
@@ -1954,6 +2204,7 @@ function nextQ(){
   targId=candidate;
   const nm=cName(targId);
   document.getElementById('hint').className='';
+  playSound('round');
 
   // ── MC MODES ──
   if(soloMode==='landmark'){
@@ -2003,6 +2254,9 @@ function nextQ(){
   if(soloMode==='click'){
     document.getElementById('tname').textContent=nm.toUpperCase();
     document.getElementById('mode-lbl').textContent=t('НАЙДИ СТРАНУ','FIND THE COUNTRY');
+  } else if(soloMode==='fact'){
+    document.getElementById('tname').innerHTML=`<span class="fact-clue">${escHtml(pickCountryFact(targId))}</span>`;
+    document.getElementById('mode-lbl').textContent=t('НАЙДИ СТРАНУ ПО ФАКТУ','FIND THE COUNTRY BY FACT');
   } else if(soloMode==='type'){
     document.getElementById('tname').textContent='???';
     document.getElementById('type-wrap').style.display='block';
@@ -2030,7 +2284,7 @@ function nextQ(){
     focusSoloCountry(targId,3.25,1000,true,true);
   }
 
-  const T=soloMode==='click'?TA:TB;
+  const T=(soloMode==='click'||soloMode==='fact')?TA:TB;
   clearInterval(tid);timeLeft=T;syncTimer(T);
   tid=setInterval(()=>{timeLeft--;syncTimer(T);if(timeLeft<=0){clearInterval(tid);onTimeout(nm);}},1000);
   gst='play';cok=true;syncDots();
@@ -2043,8 +2297,9 @@ function onMcTimeout(correctAnswer){
   setOverlay(targId,0xff3344,.35);
   showHint(t('Ответ: ','Answer: ')+correctAnswer);
   flash(false,'⏱');updHUD();hideMcPanel();
-  if(lives<=0){scheduleSoloStep(()=>endSolo(false),1600);return;}
-  qIdx++;scheduleSoloStep(()=>nextQ(),2000);
+  showCountryPop(targId);
+  if(lives<=0){scheduleSoloStep(()=>endSolo(false),2000);return;}
+  qIdx++;scheduleSoloStep(()=>nextQ(),2300);
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -2249,6 +2504,7 @@ function applyLanguageToUI(){
   if(typeof renderRegionButtons==='function') renderRegionButtons('#mp-reg-g .rb');
   if(typeof refreshDailyUI==='function') refreshDailyUI();
   if(typeof refreshAuthUI==='function') refreshAuthUI();
+  syncSoundButtons();
 }
 
 function changeLang(code){
