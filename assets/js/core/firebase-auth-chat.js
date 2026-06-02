@@ -156,7 +156,9 @@ function runPostAuthAction() {
       }
       if(action === 'chat') {
         if(typeof openChat === 'function') openChat();
-        setTimeout(() => document.getElementById('chat-input')?.focus(), 350);
+        const input = document.getElementById('chat-input');
+        if(window.softFocusInput) window.softFocusInput(input, 350);
+        else setTimeout(() => input?.focus(), 350);
       }
     } catch(e) { console.log('Post-auth action error:', e.message); }
   }, 250);
@@ -290,7 +292,9 @@ function sendChat() {
   if(!currentUser) {
     showAuthGate('chat', () => {
       // After login, focus the input
-      setTimeout(()=>document.getElementById('chat-input').focus(), 500);
+      const input = document.getElementById('chat-input');
+      if(window.softFocusInput) window.softFocusInput(input, 500);
+      else setTimeout(()=>input?.focus(), 500);
     }, 'chat');
     return;
   }

@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>WorldOrWrong — Найди страну на глобусе</title>
 <meta name="google-site-verification" content="3bPK8ajT3jYUWo-FuJcsGJ3xrA34hi65Ni-mqViWyGw" />
 <meta name="description" content="Интерактивная игра-викторина по географии. Найди страну на 3D глобусе, угадай название, сыграй дуэль с другом по сети!" />
@@ -16,7 +16,7 @@
 <link rel="shortcut icon" type="image/png" href="/favicon.png">
 <link rel="apple-touch-icon" href="/favicon.png">
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/app.css">
+<link rel="stylesheet" href="assets/css/app.css?v=20260602-mobile">
 
 </head>
 <body>
@@ -57,7 +57,7 @@
   </div>
   <div id="chat-msgs"></div>
   <div class="chat-input-row">
-    <input id="chat-input" placeholder="Напиши что-нибудь…" maxlength="200" onkeydown="if(event.key==='Enter')sendChat()"/>
+    <input id="chat-input" placeholder="Напиши что-нибудь…" maxlength="200" inputmode="text" autocapitalize="sentences" onkeydown="if(event.key==='Enter')sendChat()"/>
     <button id="chat-send" onclick="sendChat()">→</button>
   </div>
 </div>
@@ -232,7 +232,7 @@
     <div class="tbl" id="mode-lbl">НАЙДИ СТРАНУ</div>
     <div id="tname">—</div>
     <div id="solo-flag-display" style="display:none;margin-top:6px"><img id="solo-flag-img" src="" alt=""/></div>
-    <div id="type-wrap"><input id="tinput" type="text" placeholder="Введите название…" autocomplete="off" spellcheck="false"/></div>
+    <div id="type-wrap"><input id="tinput" type="text" placeholder="Введите название…" autocomplete="off" spellcheck="false" inputmode="text" autocapitalize="words"/></div>
   </div>
   <div id="sl2"><div class="slb">Очки</div><div class="sv" id="sc">0</div><div class="ss" id="stk">×1</div></div>
   <div id="sr2">
@@ -276,7 +276,7 @@
     <div class="mp-section" style="margin-bottom:8px">
       <div class="mp-section-title">Войти по коду</div>
       <div class="join-row">
-        <input id="join-code" type="text" placeholder="XXXXXX" maxlength="6" autocomplete="off" spellcheck="false"/>
+        <input id="join-code" type="text" placeholder="XXXXXX" maxlength="6" autocomplete="off" spellcheck="false" inputmode="text" autocapitalize="characters"/>
         <button class="btn-join" id="btn-join">Войти</button>
       </div>
     </div>
@@ -340,7 +340,7 @@
     <div id="result-lb-wrap" style="margin-bottom:16px;padding:14px;border:1px solid rgba(79,255,176,.2);background:rgba(79,255,176,.04);display:none">
       <div style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--accent);margin-bottom:10px">🏆 ПОПАСТЬ В РЕЙТИНГ</div>
       <div style="display:flex;gap:8px">
-        <input id="result-lb-name" type="text" placeholder="Твоё имя…" maxlength="20"
+        <input id="result-lb-name" type="text" placeholder="Твоё имя…" maxlength="20" inputmode="text" autocapitalize="words"
           style="flex:1;padding:9px 12px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);color:#fff;font-family:'Space Mono',monospace;font-size:12px;outline:none;letter-spacing:2px"/>
         <button id="result-lb-btn" style="padding:9px 14px;background:var(--accent);color:#030812;font-family:'Syne',sans-serif;font-size:12px;font-weight:800;border:none;cursor:pointer;">→</button>
       </div>
@@ -410,7 +410,7 @@
     <div id="sp-lb-wrap" style="margin-bottom:16px;padding:14px;border:1px solid rgba(107,170,255,.2);background:rgba(107,170,255,.04);display:none">
       <div style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--accent3);margin-bottom:10px">⚡ РЕЙТИНГ — НА ВРЕМЯ</div>
       <div style="display:flex;gap:8px">
-        <input id="sp-lb-name" type="text" placeholder="Твоё имя…" maxlength="20"
+        <input id="sp-lb-name" type="text" placeholder="Твоё имя…" maxlength="20" inputmode="text" autocapitalize="words"
           style="flex:1;padding:9px 12px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);color:#fff;font-family:'Space Mono',monospace;font-size:12px;outline:none;letter-spacing:2px"/>
         <button id="sp-lb-btn" style="padding:9px 14px;background:var(--accent3);color:#030812;font-family:'Syne',sans-serif;font-size:12px;font-weight:800;border:none;cursor:pointer;">→</button>
       </div>
@@ -434,7 +434,7 @@
     <div class="ov-title">👤 Профиль</div>
     <div class="ov-sub">МОЯ СТАТИСТИКА</div>
     <div class="prof-name-row">
-      <input id="prof-name-input" type="text" placeholder="Твоё имя…" maxlength="20"/>
+      <input id="prof-name-input" type="text" placeholder="Твоё имя…" maxlength="20" inputmode="text" autocapitalize="words"/>
       <button class="prof-save" id="prof-save-btn">Сохранить</button>
     </div>
     <div class="stat-grid">
@@ -512,7 +512,7 @@
       <div class="ad-slot"></div>
     </div>
     <div class="lb-submit" id="lb-submit-wrap" style="display:none">
-      <input id="lb-name-in" type="text" placeholder="Твоё имя…" maxlength="20"/>
+      <input id="lb-name-in" type="text" placeholder="Твоё имя…" maxlength="20" inputmode="text" autocapitalize="words"/>
       <button class="lb-sub-btn" id="lb-sub-btn">Отправить</button>
     </div>
   </div>
@@ -528,7 +528,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="assets/js/data/game-data.js"></script>
 <script src="assets/js/constants.js"></script>
-<script src="assets/js/core/firebase-auth-chat.js"></script>
+<script src="assets/js/core/firebase-auth-chat.js?v=20260602-mobile"></script>
 <script src="assets/js/core/matchmaking.js"></script>
 <script src="assets/js/core/profile-storage.js"></script>
 <script src="assets/js/core/achievements.js"></script>
@@ -547,12 +547,51 @@ const EARTH_TEX = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1
 const cvs=document.getElementById('cvs');
 const renderer=new THREE.WebGLRenderer({canvas:cvs,antialias:true});
 renderer.setSize(innerWidth,innerHeight);
-renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));
 renderer.setClearColor(0x000005,1);
 
 const scene=new THREE.Scene();
 const camera=new THREE.PerspectiveCamera(40,innerWidth/innerHeight,.1,500);
 camera.position.set(0,0,5.8);
+
+const mobileViewportQuery=window.matchMedia('(max-width: 760px), (pointer: coarse)');
+function isMobileViewport(){
+  return mobileViewportQuery.matches || innerWidth<=760;
+}
+function syncViewportState(){
+  const mobile=isMobileViewport();
+  document.body.classList.toggle('is-mobile',mobile);
+  document.body.classList.toggle('is-landscape',innerWidth>innerHeight);
+  camera.fov=mobile?44:40;
+  camera.aspect=innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setPixelRatio(Math.min(devicePixelRatio,mobile?1.35:2));
+  renderer.setSize(innerWidth,innerHeight);
+}
+function softFocusInput(el,delay=50){
+  if(!el || isMobileViewport())return;
+  setTimeout(()=>el.focus(),delay);
+}
+window.softFocusInput=softFocusInput;
+function syncKeyboardState(){
+  const vv=window.visualViewport;
+  const open=!!vv && isMobileViewport() && vv.height<innerHeight*.78;
+  document.body.classList.toggle('keyboard-open',open);
+}
+function bindInputViewportState(){
+  ['tinput','chat-input','join-code','result-lb-name','sp-lb-name','prof-name-input','lb-name-in'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el)return;
+    el.addEventListener('focus',()=>document.body.classList.add('input-focused'));
+    el.addEventListener('blur',()=>document.body.classList.remove('input-focused'));
+  });
+  if(window.visualViewport){
+    visualViewport.addEventListener('resize',syncKeyboardState);
+    visualViewport.addEventListener('scroll',syncKeyboardState);
+  }
+}
+syncViewportState();
+bindInputViewportState();
 
 // Minimal lighting — earth uses BasicMaterial so texture is full brightness
 const ambient=new THREE.AmbientLight(0xffffff,1.0);scene.add(ambient);
@@ -683,7 +722,9 @@ const labelDiv=document.getElementById('labels');
 function createLabels(){
   Object.entries(COUNTRIES).forEach(([id,c])=>{
     const div=document.createElement('div');
-    div.className='clabel'+(BIG_C.has(+id)?' big':SMALL_C.has(+id)?' small':'');
+    const bigLabels=window.BIG_C||new Set();
+    const smallLabels=window.SMALL_C||new Set();
+    div.className='clabel'+(bigLabels.has(+id)?' big':smallLabels.has(+id)?' small':'');
     div.textContent=c.n;
     div.style.opacity='0';
     labelDiv.appendChild(div);
@@ -777,8 +818,17 @@ window.addEventListener('wheel',e=>{camera.position.z=Math.max(3,Math.min(10,cam
 // ═══════════════════════════════════════════════════════════════
 let currentScreen='menu'; // menu | viewer | solo | mp
 
-function showScreen(s){
+function setScreenState(s){
   currentScreen=s;
+  document.body.dataset.screen=s;
+  ['menu','viewer','solo','solo-setup','mp','mp-setup','mp-result','speed'].forEach(name=>{
+    document.body.classList.toggle('screen-'+name,s===name);
+  });
+  document.body.classList.toggle('game-active',s==='solo'||s==='mp'||s==='speed');
+}
+
+function showScreen(s){
+  setScreenState(s);
   document.body.classList.toggle('viewer-active',s==='viewer');
   if(s!=='solo') resetSoloTransientUi();
   if(s!=='mp'){
@@ -1310,7 +1360,7 @@ function startMpFindingRound(targetId,mode,name,handlers={}){
     document.getElementById('tinput').placeholder=t('Введите название страны…','Enter country name…');
     setOverlay(mpFindTargetId,0x44aaff,.32);
     rotateToCountry(mpFindTargetId,3.6);
-    setTimeout(()=>document.getElementById('tinput').focus(),50);
+    softFocusInput(document.getElementById('tinput'));
     startMpRoundTimer(()=>mpOnFindFailure?.('timeout'));
     return;
   }
@@ -1323,7 +1373,7 @@ function startMpFindingRound(targetId,mode,name,handlers={}){
     document.getElementById('tinput').placeholder=t('Введите столицу…','Enter capital…');
     setOverlay(mpFindTargetId,0xffaa00,.32);
     rotateToCountry(mpFindTargetId,3.6);
-    setTimeout(()=>document.getElementById('tinput').focus(),50);
+    softFocusInput(document.getElementById('tinput'));
     startMpRoundTimer(()=>mpOnFindFailure?.('timeout'));
     return;
   }
@@ -1339,7 +1389,7 @@ function startMpFindingRound(targetId,mode,name,handlers={}){
       document.getElementById('flag-img').src=url;
       document.getElementById('flag-display').style.display='block';
     }
-    setTimeout(()=>document.getElementById('tinput').focus(),50);
+    softFocusInput(document.getElementById('tinput'));
     startMpRoundTimer(()=>mpOnFindFailure?.('timeout'));
     return;
   }
@@ -1640,7 +1690,7 @@ function showMpResult(){
   clearMpPendingSteps();
   resetMpQuestionUi();
   if(typeof botActive!=='undefined')botActive=false;
-  currentScreen='mp-result';
+  setScreenState('mp-result');
   document.getElementById('mp-game').classList.remove('show');
   const iWon=mpMyScore>mpOppScore;
   const isDraw=mpMyScore===mpOppScore;
@@ -1845,7 +1895,9 @@ function animate(){
   updateLabels();
   renderer.render(scene,camera);
 }
-window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
+window.addEventListener('resize',syncViewportState);
+if(mobileViewportQuery.addEventListener)mobileViewportQuery.addEventListener('change',syncViewportState);
+else mobileViewportQuery.addListener(syncViewportState);
 
 // ═══════════════════════════════════════════════════════════════
 //  FLAG MODE HELPER
@@ -1956,7 +2008,7 @@ function nextQ(){
     document.getElementById('type-wrap').style.display='block';
     document.getElementById('tinput').placeholder=t('Введите название страны…','Enter country name…');
     setOverlay(targId,0x44aaff,.32);
-    const inp=document.getElementById('tinput');inp.value='';inp.className='';setTimeout(()=>inp.focus(),50);
+    const inp=document.getElementById('tinput');inp.value='';inp.className='';softFocusInput(inp);
     document.getElementById('mode-lbl').textContent=t('КАК НАЗЫВАЕТСЯ ЭТА СТРАНА?','WHAT COUNTRY IS THIS?');
     focusSoloCountry(targId,3.25,0,false,true);
   } else if(soloMode==='capital'){
@@ -1964,7 +2016,7 @@ function nextQ(){
     document.getElementById('type-wrap').style.display='block';
     document.getElementById('tinput').placeholder=t('Введите столицу…','Enter capital…');
     setOverlay(targId,0xffaa00,.32);
-    const inp=document.getElementById('tinput');inp.value='';inp.className='';setTimeout(()=>inp.focus(),50);
+    const inp=document.getElementById('tinput');inp.value='';inp.className='';softFocusInput(inp);
     document.getElementById('mode-lbl').textContent=t('СТОЛИЦА ЭТОЙ СТРАНЫ?','WHAT IS THE CAPITAL?');
     focusSoloCountry(targId,3.25,0,false,true);
   } else if(soloMode==='flag'){
@@ -1974,7 +2026,7 @@ function nextQ(){
     const url=flagUrl(targId);
     if(url){document.getElementById('solo-flag-img').src=url;document.getElementById('solo-flag-display').style.display='block';}
     document.getElementById('mode-lbl').textContent=t('ЧЬЙ ЭТО ФЛАГ?','WHOSE FLAG IS THIS?');
-    const inp=document.getElementById('tinput');inp.value='';inp.className='';setTimeout(()=>inp.focus(),50);
+    const inp=document.getElementById('tinput');inp.value='';inp.className='';softFocusInput(inp);
     focusSoloCountry(targId,3.25,1000,true,true);
   }
 
