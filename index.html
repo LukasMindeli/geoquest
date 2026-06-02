@@ -16,7 +16,7 @@
 <link rel="shortcut icon" type="image/png" href="/favicon.png">
 <link rel="apple-touch-icon" href="/favicon.png">
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/app.css?v=20260602-atlas">
+<link rel="stylesheet" href="assets/css/app.css?v=20260602-atlas2">
 
 </head>
 <body>
@@ -2286,6 +2286,71 @@ function atlasStat(label,value){
   `;
 }
 
+function atlasPhrase(ru,en){
+  return lang==='ru'?ru:en;
+}
+
+function getAtlasExplorerNote(id,extra,region,religion,landmark){
+  const name=cName(id);
+  const capital=atlasCapital(id);
+  const landmarkText=landmark&&landmark!==atlasUnknown()?landmark:region;
+  const cultureCue=extra.language&&extra.language!==atlasUnknown()?extra.language:religion;
+  return atlasPhrase(
+    `${name} лучше запоминать как маршрут: регион — ${region}, стартовая точка — ${capital}, визуальный якорь — ${landmarkText}. В игре чаще всего помогают быстрые маяки: ${cultureCue} и ${extra.currency||atlasUnknown()}.`,
+    `Think of ${name} as a route: region — ${region}, starting point — ${capital}, visual anchor — ${landmarkText}. In game rounds, the quickest clues are ${cultureCue} and ${extra.currency||atlasUnknown()}.`
+  );
+}
+
+function getAtlasMemoryCues(id,extra,region,religion,landmark){
+  const capital=atlasCapital(id);
+  const landmarkText=landmark&&landmark!==atlasUnknown()?landmark:atlasPhrase('ориентир пока уточняется','landmark pending');
+  return [
+    {label:t('Где искать','Where to look'),value:region},
+    {label:t('Первый якорь','First anchor'),value:capital},
+    {label:t('Культура','Culture'),value:extra.language||religion||atlasUnknown()},
+    {label:t('Визуальный след','Visual clue'),value:landmarkText}
+  ];
+}
+
+function getAtlasRelatedIds(id){
+  const region=COUNTRIES[id]?.r||'world';
+  return Object.keys(COUNTRIES)
+    .map(Number)
+    .filter(other=>other!==id && COUNTRIES[other]?.r===region)
+    .sort((a,b)=>cName(a).localeCompare(cName(b),atlasLocale(),{sensitivity:'base'}))
+    .slice(0,5);
+}
+
+function renderAtlasRelated(id){
+  const related=getAtlasRelatedIds(id);
+  if(!related.length)return '';
+  return `
+    <div class="atlas-related">
+      <div class="atlas-story-kicker">${escHtml(t('ПОХОЖИЕ МАРШРУТЫ','RELATED ROUTES'))}</div>
+      <div class="atlas-related-row">
+        ${related.map(other=>`
+          <button class="atlas-related-card" type="button" data-atlas-related-id="${other}">
+            <span>${getCountryFlagMarkup(other)}</span>
+            <b>${escHtml(cName(other))}</b>
+          </button>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function openAtlasRegionTraining(id){
+  const region=COUNTRIES[id]?.r||'world';
+  closePanel('panel-atlas');
+  soloMode='fact';
+  soloReg=region;
+  soloDiff='easy';
+  syncSoloSetupUI();
+  setSoloSetupStep('details');
+  showScreen('solo-setup');
+  document.getElementById('solo-setup').classList.add('show');
+}
+
 function renderAtlasDetail(id){
   const el=document.getElementById('atlas-detail');
   if(!el)return;
@@ -2299,6 +2364,7 @@ function renderAtlasDetail(id){
   const leader=LEADERS[id]?(lang==='ru'?LEADERS[id].name:LEADERS[id].nameEn):atlasUnknown();
   const landmark=LANDMARKS[id]?(lang==='ru'?LANDMARKS[id].name:LANDMARKS[id].nameEn):atlasUnknown();
   const facts=getCountryFacts(id).slice(0,4);
+  const cues=getAtlasMemoryCues(id,extra,region,religion,landmark);
   el.innerHTML=`
     <div class="atlas-detail-card">
       <div class="atlas-detail-head">
@@ -2318,13 +2384,27 @@ function renderAtlasDetail(id){
         ${atlasStat(t('Ориентир','Landmark'),landmark)}
         ${atlasStat(t('Регион','Region'),region)}
       </div>
+      <div class="atlas-expedition">
+        <div class="atlas-story-kicker">${escHtml(t('ЭКСПЕДИЦИОННАЯ ЗАМЕТКА','EXPEDITION NOTE'))}</div>
+        <div class="atlas-expedition-text">${escHtml(getAtlasExplorerNote(id,extra,region,religion,landmark))}</div>
+      </div>
+      <div class="atlas-memory-grid">
+        ${cues.map(cue=>`
+          <div class="atlas-memory-card">
+            <b>${escHtml(cue.label)}</b>
+            <span>${escHtml(cue.value||atlasUnknown())}</span>
+          </div>
+        `).join('')}
+      </div>
       <div class="atlas-story">
         <div class="atlas-story-kicker">${escHtml(t('ИГРОВЫЕ ПОДСКАЗКИ','GAME CLUES'))}</div>
         ${(facts.length?facts:[t('Здесь пока мало фактов, но страна уже есть на глобусе.','There are not many facts yet, but the country is already on the globe.')]).map(f=>`<div class="atlas-fact">${escHtml(f)}</div>`).join('')}
       </div>
+      ${renderAtlasRelated(id)}
       <div class="atlas-actions">
         <button class="atlas-action" type="button" id="atlas-view-country">${escHtml(t('На глобус','View globe'))}</button>
         <button class="atlas-action alt" type="button" id="atlas-copy-clue">${escHtml(t('Случайный факт','Random clue'))}</button>
+        <button class="atlas-action alt" type="button" id="atlas-train-region">${escHtml(t('Тренировать регион','Train region'))}</button>
       </div>
     </div>
   `;
@@ -2349,6 +2429,17 @@ function renderAtlasDetail(id){
         <div class="atlas-fact">${escHtml(fact)}</div>
       `;
     }
+  });
+  const trainBtn=document.getElementById('atlas-train-region');
+  if(trainBtn)trainBtn.addEventListener('click',()=>openAtlasRegionTraining(id));
+  el.querySelectorAll('[data-atlas-related-id]').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      atlasSelectedId=parseInt(btn.dataset.atlasRelatedId,10);
+      const input=document.getElementById('atlas-search');
+      atlasQuery='';
+      if(input)input.value='';
+      renderAtlas();
+    });
   });
 }
 
