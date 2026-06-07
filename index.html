@@ -570,7 +570,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="assets/js/data/game-data.js"></script>
+<script src="assets/js/data/game-data.js?v=20260607-atlas-data"></script>
 <script src="assets/js/constants.js"></script>
 <script src="assets/js/core/firebase-auth-chat.js?v=20260602-mobile"></script>
 <script src="assets/js/core/matchmaking.js"></script>
@@ -1030,7 +1030,7 @@ function modeSupportsCountry(mode,id){
   if(mode==='landmark') return !!LANDMARKS[id];
   if(mode==='leader') return !!LEADERS[id];
   if(mode==='religion') return !!RELIGIONS[id];
-  if(mode==='fact') return !!getCountryFacts(id).length;
+  if(mode==='fact') return !!getPlayableCountryFacts(id).length;
   return true;
 }
 function rpool(reg,mode=soloMode){
@@ -1411,7 +1411,7 @@ function startMpFindingRound(targetId,mode,name,handlers={}){
 
   if(mpFindMode==='fact'){
     document.getElementById('mp-role').textContent=t('РЕЖИМ: ФАКТ','MODE: FACT CLUE');
-    setMpInstructionHtml(`<span class="fact-clue">${escHtml(pickCountryFact(mpFindTargetId))}</span>`);
+    setMpInstructionHtml(`<span class="fact-clue">${escHtml(pickCountryFact(mpFindTargetId,true))}</span>`);
     document.getElementById('mp-sel-hint').textContent=t('Найди страну, о которой этот факт','Find the country described by the fact');
     startMpRoundTimer(()=>mpOnFindFailure?.('timeout'));
     return;
@@ -1970,22 +1970,22 @@ else mobileViewportQuery.addListener(syncViewportState);
 // ═══════════════════════════════════════════════════════════════
 function flagUrl(id){
   // Use flagcdn.com with ISO alpha-2 codes
-  const iso2={4:"af",8:"al",12:"dz",20:"ad",24:"ao",32:"ar",36:"au",40:"at",31:"az",
-    50:"bd",56:"be",84:"bz",204:"bj",64:"bt",68:"bo",70:"ba",72:"bw",76:"br",96:"bn",
+  const iso2={4:"af",8:"al",12:"dz",20:"ad",24:"ao",28:"ag",32:"ar",36:"au",40:"at",31:"az",
+    44:"bs",48:"bh",50:"bd",52:"bb",56:"be",84:"bz",90:"sb",112:"by",204:"bj",64:"bt",68:"bo",70:"ba",72:"bw",76:"br",96:"bn",
     100:"bg",854:"bf",108:"bi",132:"cv",116:"kh",120:"cm",124:"ca",140:"cf",148:"td",
     152:"cl",156:"cn",170:"co",174:"km",178:"cg",180:"cd",188:"cr",384:"ci",191:"hr",
-    192:"cu",196:"cy",203:"cz",208:"dk",262:"dj",214:"do",218:"ec",818:"eg",222:"sv",
+    192:"cu",196:"cy",203:"cz",208:"dk",262:"dj",212:"dm",214:"do",218:"ec",818:"eg",222:"sv",
     226:"gq",232:"er",233:"ee",268:"ge",276:"de",231:"et",242:"fj",246:"fi",250:"fr",
-    266:"ga",270:"gm",288:"gh",300:"gr",320:"gt",324:"gn",624:"gw",328:"gy",332:"ht",
+    266:"ga",270:"gm",288:"gh",300:"gr",308:"gd",320:"gt",324:"gn",624:"gw",328:"gy",332:"ht",
     340:"hn",348:"hu",352:"is",356:"in",360:"id",364:"ir",368:"iq",372:"ie",376:"il",
     380:"it",388:"jm",392:"jp",400:"jo",398:"kz",404:"ke",408:"kp",410:"kr",414:"kw",
     417:"kg",418:"la",428:"lv",422:"lb",426:"ls",430:"lr",434:"ly",440:"lt",442:"lu",
-    450:"mg",454:"mw",458:"my",466:"ml",478:"mr",484:"mx",498:"md",496:"mn",499:"me",
+    450:"mg",454:"mw",458:"my",462:"mv",466:"ml",478:"mr",480:"mu",484:"mx",498:"md",496:"mn",499:"me",
     504:"ma",508:"mz",104:"mm",516:"na",524:"np",528:"nl",554:"nz",558:"ni",562:"ne",
     566:"ng",807:"mk",578:"no",512:"om",586:"pk",591:"pa",598:"pg",600:"py",604:"pe",
-    608:"ph",616:"pl",620:"pt",634:"qa",642:"ro",643:"ru",646:"rw",682:"sa",686:"sn",
-    688:"rs",694:"sl",703:"sk",705:"si",706:"so",710:"za",724:"es",144:"lk",729:"sd",
-    740:"sr",752:"se",756:"ch",760:"sy",762:"tj",764:"th",626:"tl",768:"tg",788:"tn",
+    608:"ph",616:"pl",620:"pt",634:"qa",642:"ro",643:"ru",646:"rw",659:"kn",662:"lc",670:"vc",678:"st",682:"sa",686:"sn",
+    688:"rs",690:"sc",694:"sl",703:"sk",705:"si",706:"so",710:"za",724:"es",144:"lk",729:"sd",
+    740:"sr",752:"se",756:"ch",760:"sy",762:"tj",764:"th",626:"tl",768:"tg",780:"tt",788:"tn",
     792:"tr",795:"tm",800:"ug",804:"ua",784:"ae",826:"gb",840:"us",858:"uy",860:"uz",
     862:"ve",704:"vn",887:"ye",894:"zm",716:"zw",728:"ss",51:"am",470:"mt",492:"mc",
     438:"li",674:"sm",520:"nr",796:"tc",548:"vu",776:"to",798:"tv",882:"ws",
@@ -2041,6 +2041,199 @@ const COUNTRY_EXTRA_INFO={
   554:{population:'~5 млн',language:'Английский, маори',currency:'Новозеландский доллар'}
 };
 
+Object.assign(COUNTRY_EXTRA_INFO,{
+  4:{population:"~44 млн",language:"Дари, Пушту, Туркменский",currency:"Афгани"},
+  8:{population:"~2,4 млн",language:"Албанский",currency:"Албанский лек"},
+  12:{population:"~47 млн",language:"Арабский",currency:"Алжирский динар"},
+  20:{population:"~88 тыс.",language:"Каталанский",currency:"Евро"},
+  24:{population:"~36 млн",language:"Португальский",currency:"Ангольская кванза"},
+  28:{population:"~104 тыс.",language:"Английский",currency:"Восточно-карибский доллар"},
+  31:{population:"~10 млн",language:"Азербайджанский",currency:"Азербайджанский манат"},
+  32:{population:"~47 млн",language:"Гуарани, Испанский",currency:"Аргентинский песо"},
+  36:{population:"~28 млн",language:"Английский",currency:"Австралийский доллар"},
+  40:{population:"~9,2 млн",language:"Немецкий",currency:"Евро"},
+  44:{population:"~398 тыс.",language:"Английский",currency:"Багамский доллар, Доллар США"},
+  48:{population:"~1,6 млн",language:"Арабский",currency:"Бахрейнский динар"},
+  50:{population:"~170 млн",language:"Бенгальский",currency:"Бангладешская така"},
+  51:{population:"~3,1 млн",language:"Армянский",currency:"Армянский драм"},
+  52:{population:"~268 тыс.",language:"Английский",currency:"Барбадосский доллар"},
+  56:{population:"~12 млн",language:"Немецкий, Французский, Нидерландский",currency:"Евро"},
+  64:{population:"~784 тыс.",language:"Дзонг-кэ",currency:"Бутанский нгултрум, Индийская рупия"},
+  68:{population:"~11 млн",language:"Аймара, Гуарани, Кечуа, Испанский",currency:"Боливийский боливиано"},
+  70:{population:"~3,4 млн",language:"Боснийский, Хорватский, Сербский",currency:"Конвертируемая марка Боснии и Герцеговины"},
+  72:{population:"~2,4 млн",language:"Английский, Тсвана",currency:"Ботсванская пула"},
+  76:{population:"~213 млн",language:"Португальский",currency:"Бразильский реал"},
+  84:{population:"~418 тыс.",language:"Белизский креольский, Английский, Испанский",currency:"Белизский доллар"},
+  90:{population:"~750 тыс.",language:"Английский",currency:"Доллар Соломоновых Островов"},
+  96:{population:"~456 тыс.",language:"Малайский",currency:"Брунейский доллар, Сингапурский доллар"},
+  100:{population:"~6,4 млн",language:"Болгарский",currency:"Болгарский лев"},
+  104:{population:"~51 млн",language:"Бирманский",currency:"Мьянманский кьят"},
+  108:{population:"~12 млн",language:"Французский, Рунди",currency:"Бурундийский франк"},
+  112:{population:"~9,1 млн",language:"Белорусский, Русский",currency:"Белорусский рубль"},
+  116:{population:"~18 млн",language:"Кхмерский",currency:"Камбоджийский риель, Доллар США"},
+  120:{population:"~29 млн",language:"Английский, Французский",currency:"Франк КФА BEAC"},
+  124:{population:"~42 млн",language:"Английский, Французский",currency:"Канадский доллар"},
+  132:{population:"~491 тыс.",language:"Португальский",currency:"Эскудо Кабо-Верде"},
+  140:{population:"~6,5 млн",language:"Французский, Санго",currency:"Франк КФА BEAC"},
+  144:{population:"~22 млн",language:"Сингальский, Тамильский",currency:"Шри-ланкийская рупия"},
+  148:{population:"~19 млн",language:"Арабский, Французский",currency:"Франк КФА BEAC"},
+  152:{population:"~20 млн",language:"Испанский",currency:"Чилийский песо"},
+  156:{population:"~1,4 млрд",language:"Китайский",currency:"Китайский юань"},
+  170:{population:"~53 млн",language:"Испанский",currency:"Колумбийский песо"},
+  174:{population:"~920 тыс.",language:"Арабский, Французский, Коморский",currency:"Коморский франк"},
+  178:{population:"~6,1 млн",language:"Французский, Киконго, Лингала",currency:"Франк КФА BEAC"},
+  180:{population:"~113 млн",language:"5 официальных языков",currency:"Конголезский франк"},
+  188:{population:"~5,3 млн",language:"Испанский",currency:"Костариканский колон"},
+  191:{population:"~3,9 млн",language:"Хорватский",currency:"Евро"},
+  192:{population:"~9,7 млн",language:"Испанский",currency:"Кубинский песо"},
+  196:{population:"~1,4 млн",language:"Греческий, Турецкий",currency:"Евро"},
+  203:{population:"~11 млн",language:"Чешский, Словацкий",currency:"Чешская крона"},
+  204:{population:"~13 млн",language:"Французский",currency:"Франк КФА ВСЕАО"},
+  208:{population:"~6,0 млн",language:"Датский",currency:"Датская крона"},
+  212:{population:"~67 тыс.",language:"Английский",currency:"Восточно-карибский доллар"},
+  214:{population:"~11 млн",language:"Испанский",currency:"Доминиканский песо"},
+  218:{population:"~18 млн",language:"Испанский",currency:"Доллар США"},
+  222:{population:"~6,0 млн",language:"Испанский",currency:"Доллар США"},
+  226:{population:"~1,7 млн",language:"Французский, Португальский, Испанский",currency:"Франк КФА BEAC"},
+  231:{population:"~112 млн",language:"Амхарский",currency:"Эфиопский быр"},
+  232:{population:"~3,6 млн",language:"Арабский, Английский, Тигринья",currency:"Эритрейская накфа"},
+  233:{population:"~1,4 млн",language:"Эстонский",currency:"Евро"},
+  242:{population:"~901 тыс.",language:"Английский, Фиджийский, Фиджи-хинди",currency:"Доллар Фиджи"},
+  246:{population:"~5,7 млн",language:"Финский, Шведский",currency:"Евро"},
+  250:{population:"~66 млн",language:"Французский",currency:"Евро"},
+  262:{population:"~1,1 млн",language:"Арабский, Французский",currency:"Франк Джибути"},
+  266:{population:"~2,5 млн",language:"Французский",currency:"Франк КФА BEAC"},
+  268:{population:"~4,0 млн",language:"Грузинский",currency:"Грузинский лари"},
+  270:{population:"~2,4 млн",language:"Английский",currency:"Гамбийский даласи"},
+  276:{population:"~83 млн",language:"Немецкий",currency:"Евро"},
+  288:{population:"~34 млн",language:"Английский",currency:"Ганский седи"},
+  296:{population:"~121 тыс.",language:"Английский, Гилбертский",currency:"Австралийский доллар, Доллар Кирибати"},
+  300:{population:"~10 млн",language:"Греческий",currency:"Евро"},
+  308:{population:"~109 тыс.",language:"Английский",currency:"Восточно-карибский доллар"},
+  320:{population:"~18 млн",language:"Испанский",currency:"Гватемальский кетсаль"},
+  324:{population:"~14 млн",language:"Французский",currency:"Гвинейский франк"},
+  328:{population:"~773 тыс.",language:"Английский",currency:"Гайанский доллар"},
+  332:{population:"~12 млн",language:"Французский, Гаитянский",currency:"Гаитянский гурд"},
+  340:{population:"~9,9 млн",language:"Испанский",currency:"Гондурасская лемпира"},
+  348:{population:"~9,5 млн",language:"Венгерский",currency:"Венгерский форинт"},
+  352:{population:"~392 тыс.",language:"Исландский",currency:"Исландская крона"},
+  356:{population:"~1,4 млрд",language:"Хинди, Английский",currency:"Индийская рупия"},
+  360:{population:"~284 млн",language:"Индонезийский",currency:"Индонезийская рупия"},
+  364:{population:"~86 млн",language:"Персидский",currency:"Иранский риал"},
+  368:{population:"~46 млн",language:"Арабский, Арамейский, Центральнокурдский",currency:"Иракский динар"},
+  372:{population:"~5,5 млн",language:"Английский, Ирландский",currency:"Евро"},
+  376:{population:"~10 млн",language:"Арабский, Иврит",currency:"Новый израильский шекель"},
+  380:{population:"~59 млн",language:"Итальянский",currency:"Евро"},
+  384:{population:"~32 млн",language:"Французский",currency:"Франк КФА ВСЕАО"},
+  388:{population:"~2,8 млн",language:"Английский, Ямайский патуа",currency:"Ямайский доллар"},
+  392:{population:"~123 млн",language:"Японский",currency:"Японская иена"},
+  398:{population:"~20 млн",language:"Казахский, Русский",currency:"Казахский тенге"},
+  400:{population:"~12 млн",language:"Арабский",currency:"Иорданский динар"},
+  404:{population:"~53 млн",language:"Английский, Суахили",currency:"Кенийский шиллинг"},
+  408:{population:"~26 млн",language:"Корейский",currency:"Северокорейская вона"},
+  410:{population:"~51 млн",language:"Корейский",currency:"Южнокорейская вона"},
+  414:{population:"~4,9 млн",language:"Арабский",currency:"Кувейтский динар"},
+  417:{population:"~7,3 млн",language:"Киргизский, Русский",currency:"Киргизский сом"},
+  418:{population:"~7,6 млн",language:"Лаосский",currency:"Лаосский кип"},
+  422:{population:"~5,5 млн",language:"Арабский, Французский",currency:"Ливанский фунт"},
+  426:{population:"~2,1 млн",language:"Английский, Южный сото",currency:"Лоти, Южноафриканский рэнд"},
+  428:{population:"~1,8 млн",language:"Латышский",currency:"Евро"},
+  430:{population:"~5,2 млн",language:"Английский",currency:"Либерийский доллар"},
+  434:{population:"~7,5 млн",language:"Арабский",currency:"Ливийский динар"},
+  438:{population:"~41 тыс.",language:"Немецкий",currency:"Швейцарский франк"},
+  440:{population:"~2,9 млн",language:"Литовский",currency:"Евро"},
+  442:{population:"~682 тыс.",language:"Немецкий, Французский, Люксембургский",currency:"Евро"},
+  450:{population:"~32 млн",language:"Французский, Малагасийский",currency:"Малагасийский ариари"},
+  454:{population:"~21 млн",language:"Английский, Ньянджа",currency:"Малавийская квача"},
+  458:{population:"~34 млн",language:"Английский, Малайский",currency:"Малайзийский ринггит"},
+  462:{population:"~515 тыс.",language:"Мальдивский",currency:"Мальдивская руфия"},
+  466:{population:"~22 млн",language:"Французский",currency:"Франк КФА ВСЕАО"},
+  470:{population:"~574 тыс.",language:"Английский, Мальтийский",currency:"Евро"},
+  478:{population:"~4,9 млн",language:"Арабский",currency:"Мавританская угия"},
+  480:{population:"~1,2 млн",language:"Английский, Французский, Маврикийский креольский",currency:"Маврикийская рупия"},
+  484:{population:"~131 млн",language:"Испанский",currency:"Мексиканский песо"},
+  492:{population:"~38 тыс.",language:"Французский",currency:"Евро"},
+  496:{population:"~3,5 млн",language:"Монгольский",currency:"Монгольский тугрик"},
+  498:{population:"~2,7 млн",language:"Румынский",currency:"Молдавский лей"},
+  499:{population:"~623 тыс.",language:"Черногорский, Сербский, Боснийский, Албанский",currency:"Евро"},
+  504:{population:"~37 млн",language:"Арабский, Берберские языки",currency:"Марокканский дирхам"},
+  508:{population:"~34 млн",language:"Португальский",currency:"Мозамбикский метикал"},
+  512:{population:"~5,3 млн",language:"Арабский",currency:"Оманский риал"},
+  516:{population:"~3,0 млн",language:"9 официальных языков",currency:"Доллар Намибии, Южноафриканский рэнд"},
+  520:{population:"~12 тыс.",language:"Английский, Науру",currency:"Австралийский доллар"},
+  524:{population:"~30 млн",language:"Непальский",currency:"Непальская рупия"},
+  528:{population:"~18 млн",language:"Нидерландский",currency:"Евро"},
+  548:{population:"~321 тыс.",language:"Бислама, Английский, Французский",currency:"Вату Вануату"},
+  554:{population:"~5,3 млн",language:"Английский, Маори, Новозеландский жестовый язык",currency:"Новозеландский доллар"},
+  558:{population:"~6,8 млн",language:"Испанский",currency:"Никарагуанская кордоба"},
+  562:{population:"~26 млн",language:"Французский",currency:"Франк КФА ВСЕАО"},
+  566:{population:"~224 млн",language:"Английский",currency:"Нигерийская найра"},
+  578:{population:"~5,6 млн",language:"Норвежский букмол, Нюнорск, Саамские языки",currency:"Норвежская крона"},
+  583:{population:"~106 тыс.",language:"Английский",currency:"Доллар США"},
+  584:{population:"~42 тыс.",language:"Английский, Маршалльский",currency:"Доллар США"},
+  585:{population:"~17 тыс.",language:"Английский, Палау",currency:"Доллар США"},
+  586:{population:"~241 млн",language:"Английский, Урду",currency:"Пакистанская рупия"},
+  591:{population:"~4,1 млн",language:"Испанский",currency:"Панамский бальбоа, Доллар США"},
+  598:{population:"~12 млн",language:"Английский, Хиримоту, Ток-писин",currency:"Кина Папуа – Новой Гвинеи"},
+  600:{population:"~6,1 млн",language:"Гуарани, Испанский",currency:"Парагвайский гуарани"},
+  604:{population:"~34 млн",language:"Аймара, Кечуа, Испанский",currency:"Перуанский соль"},
+  608:{population:"~114 млн",language:"Английский, Филиппинский",currency:"Филиппинский песо"},
+  616:{population:"~37 млн",language:"Польский",currency:"Польский злотый"},
+  620:{population:"~11 млн",language:"Португальский",currency:"Евро"},
+  624:{population:"~1,8 млн",language:"Португальский, Верхнегвинейский креольский",currency:"Франк КФА ВСЕАО"},
+  626:{population:"~1,4 млн",language:"Португальский, Тетум",currency:"Доллар США"},
+  634:{population:"~3,2 млн",language:"Арабский",currency:"Катарский риал"},
+  642:{population:"~19 млн",language:"Румынский",currency:"Румынский лей"},
+  643:{population:"~146 млн",language:"Русский",currency:"Российский рубль"},
+  646:{population:"~14 млн",language:"Английский, Французский, Киньяруанда",currency:"Франк Руанды"},
+  659:{population:"~51 тыс.",language:"Английский",currency:"Восточно-карибский доллар"},
+  662:{population:"~184 тыс.",language:"Английский",currency:"Восточно-карибский доллар"},
+  670:{population:"~111 тыс.",language:"Английский",currency:"Восточно-карибский доллар"},
+  674:{population:"~34 тыс.",language:"Итальянский",currency:"Евро"},
+  678:{population:"~210 тыс.",language:"Португальский",currency:"Добра Сан-Томе и Принсипи"},
+  682:{population:"~35 млн",language:"Арабский",currency:"Саудовский риял"},
+  686:{population:"~19 млн",language:"Французский",currency:"Франк КФА ВСЕАО"},
+  688:{population:"~6,6 млн",language:"Сербский",currency:"Сербский динар"},
+  690:{population:"~123 тыс.",language:"Сейшельский креольский, Английский, Французский",currency:"Сейшельская рупия"},
+  694:{population:"~9,1 млн",language:"Английский",currency:"Леоне"},
+  703:{population:"~5,4 млн",language:"Словацкий",currency:"Евро"},
+  704:{population:"~101 млн",language:"Вьетнамский",currency:"Вьетнамский донг"},
+  705:{population:"~2,1 млн",language:"Словенский",currency:"Евро"},
+  706:{population:"~20 млн",language:"Арабский, Сомали",currency:"Сомалийский шиллинг"},
+  710:{population:"~63 млн",language:"11 официальных языков",currency:"Южноафриканский рэнд"},
+  716:{population:"~17 млн",language:"15 официальных языков",currency:"Zimbabwe Gold (ZiG)"},
+  724:{population:"~49 млн",language:"Испанский, Каталанский, Баскский, Галисийский",currency:"Евро"},
+  728:{population:"~16 млн",language:"Английский",currency:"Южносуданский фунт"},
+  729:{population:"~52 млн",language:"Арабский, Английский",currency:"Суданский фунт"},
+  740:{population:"~617 тыс.",language:"Нидерландский",currency:"Суринамский доллар"},
+  752:{population:"~11 млн",language:"Шведский",currency:"Шведская крона"},
+  756:{population:"~9,1 млн",language:"Французский, Швейцарский немецкий, Итальянский, Романшский",currency:"Швейцарский франк"},
+  760:{population:"~26 млн",language:"Арабский",currency:"Сирийский фунт"},
+  762:{population:"~10 млн",language:"Русский, Таджикский",currency:"Таджикский сомони"},
+  764:{population:"~66 млн",language:"Тайский",currency:"Таиландский бат"},
+  768:{population:"~8,1 млн",language:"Французский",currency:"Франк КФА ВСЕАО"},
+  776:{population:"~100 тыс.",language:"Английский, Тонганский",currency:"Тонганская паанга"},
+  780:{population:"~1,4 млн",language:"Английский",currency:"Доллар Тринидада и Тобаго"},
+  784:{population:"~11 млн",language:"Арабский",currency:"Дирхам ОАЭ"},
+  788:{population:"~12 млн",language:"Арабский",currency:"Тунисский динар"},
+  792:{population:"~86 млн",language:"Турецкий",currency:"Турецкая лира"},
+  795:{population:"~7,1 млн",language:"Русский, Туркменский",currency:"Новый туркменский манат"},
+  798:{population:"~11 тыс.",language:"Английский, Тувалу",currency:"Австралийский доллар, Доллар Тувалу"},
+  800:{population:"~46 млн",language:"Английский, Суахили",currency:"Угандийский шиллинг"},
+  804:{population:"~33 млн",language:"Украинский",currency:"Украинская гривна"},
+  807:{population:"~1,8 млн",language:"Македонский",currency:"Македонский денар"},
+  818:{population:"~107 млн",language:"Арабский",currency:"Египетский фунт"},
+  826:{population:"~69 млн",language:"Английский",currency:"Британский фунт стерлингов"},
+  840:{population:"~340 млн",language:"Английский",currency:"Доллар США"},
+  854:{population:"~24 млн",language:"Французский",currency:"Франк КФА ВСЕАО"},
+  858:{population:"~3,5 млн",language:"Испанский",currency:"Уругвайский песо"},
+  860:{population:"~38 млн",language:"Русский, Узбекский",currency:"Узбекский сум"},
+  862:{population:"~29 млн",language:"Испанский",currency:"Венесуэльский боливар"},
+  882:{population:"~206 тыс.",language:"Английский, Самоанский",currency:"Самоанская тала"},
+  887:{population:"~33 млн",language:"Арабский",currency:"Йеменский риал"},
+  894:{population:"~20 млн",language:"Английский",currency:"Замбийская квача"}
+});
+
 const REGION_INFO_FALLBACK={
   europe:{language:'языки Европы',currency:'евро и местные валюты'},
   asia:{language:'языки Азии',currency:'местные валюты Азии'},
@@ -2066,9 +2259,7 @@ function getCountryFlagMarkup(id){
 }
 
 function getCountryExtra(id){
-  const c=COUNTRIES[id]||{};
-  const fallback=REGION_INFO_FALLBACK[c.r]||REGION_INFO_FALLBACK.world;
-  return Object.assign({population:'—',language:fallback.language,currency:fallback.currency},COUNTRY_EXTRA_INFO[id]||{});
+  return Object.assign({population:'—',language:'',currency:''},COUNTRY_EXTRA_INFO[id]||{});
 }
 
 function countryFact(label,value){
@@ -2138,7 +2329,6 @@ function renderResultRankCard(){
 
 function getCountryFacts(id){
   if(!COUNTRIES[id])return [];
-  const c=COUNTRIES[id];
   const exactExtra=COUNTRY_EXTRA_INFO[id]||{};
   const facts=[];
   if(CAPITALS[id])facts.push(t(`Столица этой страны — ${capName(id)}.`,`The capital of this country is ${capName(id)}.`));
@@ -2149,12 +2339,22 @@ function getCountryFacts(id){
   if(RELIGIONS[id])facts.push(t(`Основная религиозная традиция — ${localizedReligionName(RELIGIONS[id])}.`,`Main religious tradition — ${localizedReligionName(RELIGIONS[id])}.`));
   if(exactExtra.currency)facts.push(t(`Валюта — ${exactExtra.currency}.`,`Currency — ${exactExtra.currency}.`));
   if(exactExtra.language)facts.push(t(`Государственный язык — ${exactExtra.language}.`,`Official language — ${exactExtra.language}.`));
-  facts.push(t(`Регион: ${getRegionPlainLabel(c.r||'world')}.`,`Region: ${getRegionPlainLabel(c.r||'world')}.`));
   return facts;
 }
 
-function pickCountryFact(id){
-  const facts=getCountryFacts(id);
+function getPlayableCountryFacts(id){
+  if(!COUNTRIES[id])return [];
+  const facts=[];
+  if(CAPITALS[id])facts.push(t(`Столица этой страны — ${capName(id)}.`,`The capital of this country is ${capName(id)}.`));
+  if(LANDMARKS[id]){
+    const lm=LANDMARKS[id];
+    facts.push(t(`Известный ориентир — ${lm.name}.`,`A known landmark is ${lm.nameEn}.`));
+  }
+  return facts;
+}
+
+function pickCountryFact(id,gameOnly=false){
+  const facts=gameOnly?getPlayableCountryFacts(id):getCountryFacts(id);
   return facts.length?facts[Math.floor(Math.random()*facts.length)]:cName(id);
 }
 
@@ -2303,11 +2503,13 @@ function getAtlasExplorerNote(id,extra,region,religion,landmark){
   const name=cName(id);
   const capital=atlasCapital(id);
   const landmarkText=hasAtlasValue(landmark)?landmark:region;
-  const cultureCue=hasAtlasValue(extra.language)?extra.language:(hasAtlasValue(religion)?religion:region);
-  const currencyCue=hasAtlasValue(extra.currency)?extra.currency:atlasPhrase('валюту лучше смотреть в карточке страны','check the country card for currency');
+  const referenceFields=[extra.language,extra.currency].filter(hasAtlasValue).join(' и ');
+  const referenceNote=referenceFields
+    ? atlasPhrase(`Справочные поля карточки: ${referenceFields}.`,`Reference fields in the card: ${referenceFields}.`)
+    : atlasPhrase('Справочные поля будут дополняться по мере проверки.','Reference fields will be expanded as they are verified.');
   return atlasPhrase(
-    `${name} лучше запоминать как маршрут: регион — ${region}, стартовая точка — ${capital}, визуальный якорь — ${landmarkText}. В игре чаще всего помогают быстрые маяки: ${cultureCue} и ${currencyCue}.`,
-    `Think of ${name} as a route: region — ${region}, starting point — ${capital}, visual anchor — ${landmarkText}. In game rounds, the quickest clues are ${cultureCue} and ${currencyCue}.`
+    `${name} лучше запоминать как маршрут: регион — ${region}, стартовая точка — ${capital}, визуальный якорь — ${landmarkText}. ${referenceNote}`,
+    `Think of ${name} as a route: region — ${region}, starting point — ${capital}, visual anchor — ${landmarkText}. ${referenceNote}`
   );
 }
 
@@ -2373,7 +2575,7 @@ function renderAtlasDetail(id){
   const region=getRegionPlainLabel(COUNTRIES[id].r||'world');
   const religion=RELIGIONS[id]?localizedReligionName(RELIGIONS[id]):'';
   const landmark=LANDMARKS[id]?(lang==='ru'?LANDMARKS[id].name:LANDMARKS[id].nameEn):'';
-  const facts=getCountryFacts(id).slice(0,4);
+  const facts=getPlayableCountryFacts(id).slice(0,4);
   const cues=getAtlasMemoryCues(id,extra,region,religion,landmark);
   el.innerHTML=`
     <div class="atlas-detail-card">
@@ -2406,7 +2608,7 @@ function renderAtlasDetail(id){
         `).join('')}
       </div>`:''}
       <div class="atlas-story">
-        <div class="atlas-story-kicker">${escHtml(t('ИГРОВЫЕ ПОДСКАЗКИ','GAME CLUES'))}</div>
+        <div class="atlas-story-kicker">${escHtml(t('ТОЧНЫЕ ИГРОВЫЕ ПОДСКАЗКИ','PRECISE GAME CLUES'))}</div>
         ${(facts.length?facts:[t('Здесь пока мало фактов, но страна уже есть на глобусе.','There are not many facts yet, but the country is already on the globe.')]).map(f=>`<div class="atlas-fact">${escHtml(f)}</div>`).join('')}
       </div>
       ${renderAtlasRelated(id)}
@@ -2430,7 +2632,7 @@ function renderAtlasDetail(id){
   });
   const clueBtn=document.getElementById('atlas-copy-clue');
   if(clueBtn)clueBtn.addEventListener('click',()=>{
-    const fact=pickCountryFact(id);
+    const fact=pickCountryFact(id,true);
     const story=document.querySelector('#atlas-detail .atlas-story');
     if(story){
       story.innerHTML=`
@@ -2601,7 +2803,7 @@ function nextQ(){
     document.getElementById('tname').textContent=nm.toUpperCase();
     document.getElementById('mode-lbl').textContent=t('НАЙДИ СТРАНУ','FIND THE COUNTRY');
   } else if(soloMode==='fact'){
-    document.getElementById('tname').innerHTML=`<span class="fact-clue">${escHtml(pickCountryFact(targId))}</span>`;
+    document.getElementById('tname').innerHTML=`<span class="fact-clue">${escHtml(pickCountryFact(targId,true))}</span>`;
     document.getElementById('mode-lbl').textContent=t('НАЙДИ СТРАНУ ПО ФАКТУ','FIND THE COUNTRY BY FACT');
   } else if(soloMode==='type'){
     document.getElementById('tname').textContent='???';
