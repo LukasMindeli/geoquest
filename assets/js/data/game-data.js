@@ -101,6 +101,7 @@ window.LANDMARKS = {
   764:{name:"Большой дворец Бангкока",nameEn:"Grand Palace",img:"🏯",hint:"Таиланд"},
   360:{name:"Боробудур",nameEn:"Borobudur",img:"🛕",hint:"Индонезия"},
   376:{name:"Стена Плача",nameEn:"Western Wall",img:"🪨",hint:"Израиль"},
+  268:{name:"Светицховели",nameEn:"Svetitskhoveli Cathedral",img:"⛪",hint:"Грузия"},
 };
 
 // ── LEADERS ───────────────────────────────────────────────────

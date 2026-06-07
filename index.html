@@ -16,7 +16,7 @@
 <link rel="shortcut icon" type="image/png" href="/favicon.png">
 <link rel="apple-touch-icon" href="/favicon.png">
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/app.css?v=20260602-atlas2">
+<link rel="stylesheet" href="assets/css/app.css?v=20260602-atlas3">
 
 </head>
 <body>
@@ -2068,7 +2068,7 @@ function getCountryFlagMarkup(id){
 function getCountryExtra(id){
   const c=COUNTRIES[id]||{};
   const fallback=REGION_INFO_FALLBACK[c.r]||REGION_INFO_FALLBACK.world;
-  return Object.assign({population:t('данные уточняются','data pending'),language:fallback.language,currency:fallback.currency},COUNTRY_EXTRA_INFO[id]||{});
+  return Object.assign({population:'—',language:fallback.language,currency:fallback.currency},COUNTRY_EXTRA_INFO[id]||{});
 }
 
 function countryFact(label,value){
@@ -2077,17 +2077,17 @@ function countryFact(label,value){
 
 function renderCountryInfoHtml(id,compact=false){
   if(!COUNTRIES[id])return '';
-  const extra=getCountryExtra(id);
+  const exactExtra=COUNTRY_EXTRA_INFO[id]||{};
   const region=getRegionPlainLabel(COUNTRIES[id].r||'world');
   const capital=capName(id);
-  const religion=RELIGIONS[id]?localizedReligionName(RELIGIONS[id]):t('данные уточняются','data pending');
+  const religion=RELIGIONS[id]?localizedReligionName(RELIGIONS[id]):'';
   const facts=[
-    countryFact(t('Столица','Capital'),capital),
-    countryFact(t('Население','Population'),extra.population),
-    countryFact(t('Язык','Language'),extra.language),
-    countryFact(t('Валюта','Currency'),extra.currency)
+    countryFact(t('Столица','Capital'),capital)
   ];
-  if(!compact)facts.push(countryFact(t('Религия','Religion'),religion));
+  if(exactExtra.population)facts.push(countryFact(t('Население','Population'),exactExtra.population));
+  if(exactExtra.language)facts.push(countryFact(t('Государственный язык','Official language'),exactExtra.language));
+  if(exactExtra.currency)facts.push(countryFact(t('Валюта','Currency'),exactExtra.currency));
+  if(!compact&&religion)facts.push(countryFact(t('Религия','Religion'),religion));
   return `
     <div class="country-mini-head">
       <div class="country-flag">${getCountryFlagMarkup(id)}</div>
@@ -2139,16 +2139,16 @@ function renderResultRankCard(){
 function getCountryFacts(id){
   if(!COUNTRIES[id])return [];
   const c=COUNTRIES[id];
-  const extra=getCountryExtra(id);
+  const exactExtra=COUNTRY_EXTRA_INFO[id]||{};
   const facts=[];
   if(CAPITALS[id])facts.push(t(`Столица этой страны — ${capName(id)}.`,`The capital of this country is ${capName(id)}.`));
   if(LANDMARKS[id]){
     const lm=LANDMARKS[id];
-    facts.push(t(`Здесь находится ${lm.name}.`,`This country has ${lm.nameEn}.`));
+    facts.push(t(`Известный ориентир — ${lm.name}.`,`A known landmark is ${lm.nameEn}.`));
   }
-  if(RELIGIONS[id])facts.push(t(`Одна из главных религий — ${localizedReligionName(RELIGIONS[id])}.`,`One of the main religions is ${localizedReligionName(RELIGIONS[id])}.`));
-  if(extra.currency)facts.push(t(`Здесь используют валюту: ${extra.currency}.`,`Its currency is ${extra.currency}.`));
-  if(extra.language)facts.push(t(`Один из языков: ${extra.language}.`,`One language clue: ${extra.language}.`));
+  if(RELIGIONS[id])facts.push(t(`Основная религиозная традиция — ${localizedReligionName(RELIGIONS[id])}.`,`Main religious tradition — ${localizedReligionName(RELIGIONS[id])}.`));
+  if(exactExtra.currency)facts.push(t(`Валюта — ${exactExtra.currency}.`,`Currency — ${exactExtra.currency}.`));
+  if(exactExtra.language)facts.push(t(`Государственный язык — ${exactExtra.language}.`,`Official language — ${exactExtra.language}.`));
   facts.push(t(`Регион: ${getRegionPlainLabel(c.r||'world')}.`,`Region: ${getRegionPlainLabel(c.r||'world')}.`));
   return facts;
 }
@@ -2166,7 +2166,7 @@ let atlasQuery='';
 let atlasSelectedId=null;
 
 function atlasUnknown(){
-  return t('данные уточняются','data pending');
+  return '—';
 }
 
 function atlasCapital(id){
@@ -2286,6 +2286,15 @@ function atlasStat(label,value){
   `;
 }
 
+function hasAtlasValue(value){
+  const text=String(value??'').trim();
+  return !!text && text!==atlasUnknown() && !/данные уточняются|data pending/i.test(text);
+}
+
+function atlasOptionalStat(label,value){
+  return hasAtlasValue(value)?atlasStat(label,value):'';
+}
+
 function atlasPhrase(ru,en){
   return lang==='ru'?ru:en;
 }
@@ -2293,23 +2302,24 @@ function atlasPhrase(ru,en){
 function getAtlasExplorerNote(id,extra,region,religion,landmark){
   const name=cName(id);
   const capital=atlasCapital(id);
-  const landmarkText=landmark&&landmark!==atlasUnknown()?landmark:region;
-  const cultureCue=extra.language&&extra.language!==atlasUnknown()?extra.language:religion;
+  const landmarkText=hasAtlasValue(landmark)?landmark:region;
+  const cultureCue=hasAtlasValue(extra.language)?extra.language:(hasAtlasValue(religion)?religion:region);
+  const currencyCue=hasAtlasValue(extra.currency)?extra.currency:atlasPhrase('валюту лучше смотреть в карточке страны','check the country card for currency');
   return atlasPhrase(
-    `${name} лучше запоминать как маршрут: регион — ${region}, стартовая точка — ${capital}, визуальный якорь — ${landmarkText}. В игре чаще всего помогают быстрые маяки: ${cultureCue} и ${extra.currency||atlasUnknown()}.`,
-    `Think of ${name} as a route: region — ${region}, starting point — ${capital}, visual anchor — ${landmarkText}. In game rounds, the quickest clues are ${cultureCue} and ${extra.currency||atlasUnknown()}.`
+    `${name} лучше запоминать как маршрут: регион — ${region}, стартовая точка — ${capital}, визуальный якорь — ${landmarkText}. В игре чаще всего помогают быстрые маяки: ${cultureCue} и ${currencyCue}.`,
+    `Think of ${name} as a route: region — ${region}, starting point — ${capital}, visual anchor — ${landmarkText}. In game rounds, the quickest clues are ${cultureCue} and ${currencyCue}.`
   );
 }
 
 function getAtlasMemoryCues(id,extra,region,religion,landmark){
   const capital=atlasCapital(id);
-  const landmarkText=landmark&&landmark!==atlasUnknown()?landmark:atlasPhrase('ориентир пока уточняется','landmark pending');
+  const landmarkText=hasAtlasValue(landmark)?landmark:'';
   return [
     {label:t('Где искать','Where to look'),value:region},
     {label:t('Первый якорь','First anchor'),value:capital},
-    {label:t('Культура','Culture'),value:extra.language||religion||atlasUnknown()},
+    {label:t('Язык','Language'),value:extra.language||''},
     {label:t('Визуальный след','Visual clue'),value:landmarkText}
-  ];
+  ].filter(cue=>hasAtlasValue(cue.value));
 }
 
 function getAtlasRelatedIds(id){
@@ -2358,11 +2368,11 @@ function renderAtlasDetail(id){
     el.innerHTML=`<div class="atlas-empty">${escHtml(t('Выбери страну, чтобы открыть карточку.','Choose a country to open its card.'))}</div>`;
     return;
   }
-  const extra=getCountryExtra(id);
+  const exactExtra=COUNTRY_EXTRA_INFO[id]||{};
+  const extra=Object.assign({},getCountryExtra(id),exactExtra);
   const region=getRegionPlainLabel(COUNTRIES[id].r||'world');
-  const religion=RELIGIONS[id]?localizedReligionName(RELIGIONS[id]):atlasUnknown();
-  const leader=LEADERS[id]?(lang==='ru'?LEADERS[id].name:LEADERS[id].nameEn):atlasUnknown();
-  const landmark=LANDMARKS[id]?(lang==='ru'?LANDMARKS[id].name:LANDMARKS[id].nameEn):atlasUnknown();
+  const religion=RELIGIONS[id]?localizedReligionName(RELIGIONS[id]):'';
+  const landmark=LANDMARKS[id]?(lang==='ru'?LANDMARKS[id].name:LANDMARKS[id].nameEn):'';
   const facts=getCountryFacts(id).slice(0,4);
   const cues=getAtlasMemoryCues(id,extra,region,religion,landmark);
   el.innerHTML=`
@@ -2376,26 +2386,25 @@ function renderAtlasDetail(id){
       </div>
       <div class="atlas-stat-grid">
         ${atlasStat(t('Столица','Capital'),atlasCapital(id))}
-        ${atlasStat(t('Население','Population'),extra.population)}
-        ${atlasStat(t('Язык','Language'),extra.language)}
-        ${atlasStat(t('Валюта','Currency'),extra.currency)}
-        ${atlasStat(t('Религия','Religion'),religion)}
-        ${atlasStat(t('Лидер в игре','Game leader'),leader)}
-        ${atlasStat(t('Ориентир','Landmark'),landmark)}
+        ${atlasOptionalStat(t('Население','Population'),exactExtra.population)}
+        ${atlasOptionalStat(t('Государственный язык','Official language'),exactExtra.language)}
+        ${atlasOptionalStat(t('Валюта','Currency'),exactExtra.currency)}
+        ${atlasOptionalStat(t('Религия','Religion'),religion)}
+        ${atlasOptionalStat(t('Ориентир','Landmark'),landmark)}
         ${atlasStat(t('Регион','Region'),region)}
       </div>
       <div class="atlas-expedition">
         <div class="atlas-story-kicker">${escHtml(t('ЭКСПЕДИЦИОННАЯ ЗАМЕТКА','EXPEDITION NOTE'))}</div>
         <div class="atlas-expedition-text">${escHtml(getAtlasExplorerNote(id,extra,region,religion,landmark))}</div>
       </div>
-      <div class="atlas-memory-grid">
+      ${cues.length?`<div class="atlas-memory-grid">
         ${cues.map(cue=>`
           <div class="atlas-memory-card">
             <b>${escHtml(cue.label)}</b>
             <span>${escHtml(cue.value||atlasUnknown())}</span>
           </div>
         `).join('')}
-      </div>
+      </div>`:''}
       <div class="atlas-story">
         <div class="atlas-story-kicker">${escHtml(t('ИГРОВЫЕ ПОДСКАЗКИ','GAME CLUES'))}</div>
         ${(facts.length?facts:[t('Здесь пока мало фактов, но страна уже есть на глобусе.','There are not many facts yet, but the country is already on the globe.')]).map(f=>`<div class="atlas-fact">${escHtml(f)}</div>`).join('')}
