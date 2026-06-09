@@ -20,10 +20,34 @@
     if (adsensePromise) return adsensePromise;
 
     adsensePromise = new Promise((resolve) => {
-      const existing = document.querySelector('script[data-wow-adsense="1"]');
+      let resolved = false;
+      const finish = (ok) => {
+        if (resolved) return;
+        resolved = true;
+        adsenseReady = !!ok;
+        resolve(!!ok);
+      };
+
+      const existing = document.querySelector(
+        'script[data-wow-adsense="1"], script[src*="pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"]'
+      );
       if (existing) {
-        adsenseReady = true;
-        resolve(true);
+        existing.dataset.wowAdsense = "1";
+        if (window.adsbygoogle || existing.dataset.wowAdsenseLoaded === "1") {
+          finish(true);
+          return;
+        }
+        existing.addEventListener("load", function () {
+          existing.dataset.wowAdsenseLoaded = "1";
+          finish(true);
+        }, { once: true });
+        existing.addEventListener("error", function () {
+          console.log("AdSense script failed to load.");
+          finish(false);
+        }, { once: true });
+        setTimeout(function () {
+          finish(!!window.adsbygoogle);
+        }, 3000);
         return;
       }
 
@@ -33,12 +57,12 @@
       script.crossOrigin = "anonymous";
       script.dataset.wowAdsense = "1";
       script.onload = function () {
-        adsenseReady = true;
-        resolve(true);
+        script.dataset.wowAdsenseLoaded = "1";
+        finish(true);
       };
       script.onerror = function () {
         console.log("AdSense script failed to load.");
-        resolve(false);
+        finish(false);
       };
       document.head.appendChild(script);
     });
