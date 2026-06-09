@@ -2,6 +2,7 @@
   const rawConfig = window.WOW_ADSENSE || {};
   const config = {
     client: typeof rawConfig.client === "string" ? rawConfig.client.trim() : "",
+    autoAds: rawConfig.autoAds === true,
     slots: rawConfig.slots || {}
   };
 
@@ -13,6 +14,13 @@
   function getSlotValue(key) {
     const value = config.slots && typeof config.slots[key] === "string" ? config.slots[key].trim() : "";
     return /^\d{6,}$/.test(value) ? value : "";
+  }
+
+  function hasRenderableAds(shells) {
+    if (config.autoAds) return true;
+    return Array.from(shells || document.querySelectorAll(".ad-shell[data-ad-slot-key]")).some((shell) => {
+      return !!getSlotValue(shell.dataset.adSlotKey);
+    });
   }
 
   function ensureAdSenseScript() {
@@ -122,12 +130,13 @@
 
   async function refreshAds() {
     refreshQueued = false;
-    if (!clientOk) return;
+    const shells = document.querySelectorAll(".ad-shell[data-ad-slot-key]");
+    if (!clientOk || !hasRenderableAds(shells)) return;
 
     const loaded = await ensureAdSenseScript();
     if (!loaded || !adsenseReady) return;
 
-    document.querySelectorAll(".ad-shell[data-ad-slot-key]").forEach((container) => {
+    shells.forEach((container) => {
       const slotId = getSlotValue(container.dataset.adSlotKey);
       if (!slotId) return;
       if (!isSurfaceActive(getSurfaceNode(container))) return;
@@ -143,7 +152,7 @@
 
   function initAds() {
     const shells = document.querySelectorAll(".ad-shell[data-ad-slot-key]");
-    if (!clientOk) {
+    if (!clientOk || !hasRenderableAds(shells)) {
       shells.forEach((shell) => {
         shell.hidden = true;
       });
