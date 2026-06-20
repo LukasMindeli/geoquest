@@ -1,86 +1,292 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WorldOrWrong Country Atlas Guide</title>
-<meta name="description" content="Use the WorldOrWrong Country Atlas to learn countries, capitals, regions, flags, official languages, currencies and landmarks through map-based memory.">
-<meta name="robots" content="index,follow">
+<title>Энциклопедия стран мира — WorldOrWrong</title>
+<meta name="description" content="Карточки стран с проверяемыми сведениями: столица, язык, валюта, регион и практический ориентир для поиска на глобусе.">
+<meta name="robots" content="index,follow,max-image-preview:large">
 <link rel="canonical" href="https://worldorwrong.com/country-guides.html">
 <link rel="icon" type="image/png" href="/favicon.png">
-<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/assets/css/content.css">
+<link rel="stylesheet" href="/assets/css/site.css?v=20260620">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"CollectionPage","name":"Энциклопедия стран WorldOrWrong","url":"https://worldorwrong.com/country-guides.html","inLanguage":"ru","description":"Учебные карточки стран с географическими ориентирами, столицами, языками и валютами."}
+</script>
 </head>
 <body>
-<main class="page">
-  <header class="topbar">
-    <a class="brand" href="/"><span>WorldOrWrong</span></a>
-    <nav class="nav" aria-label="Content navigation">
-      <a class="nav-link" href="/">Game</a>
-      <a class="nav-link" href="/about.html">About</a>
-      <a class="nav-link" href="/how-to-play.html">How to play</a>
-      <a class="nav-link" href="/privacy.html">Privacy</a>
+<header class="site-header">
+  <div class="shell header-inner">
+    <a class="brand" href="/"><span class="brand-mark">W</span><span>WorldOrWrong</span></a>
+    <nav class="site-nav" aria-label="Основная навигация">
+      <a href="/">Главная</a><a aria-current="page" href="/country-guides.html">Страны</a><a href="/regions.html">Регионы</a><a href="/how-to-play.html">Как играть</a><a href="/about.html">О проекте</a><a class="nav-play" href="/play.html">Открыть глобус</a>
     </nav>
-  </header>
+  </div>
+</header>
 
-  <section class="hero">
-    <div class="eyebrow">Country atlas</div>
-    <h1>A practical atlas for remembering countries on the globe.</h1>
-    <p class="lead">The WorldOrWrong atlas is built for active recall. A country card is not just a list of trivia: it gives you a compact route for memory - where to look, which capital anchors the country, which region it belongs to, and which visual detail can make it easier to recognize next time.</p>
-    <div class="cta-row">
-      <a class="cta" href="/">Open the interactive atlas</a>
-      <a class="cta secondary" href="/how-to-play.html">Read the game guide</a>
+<main>
+  <section class="shell page-hero">
+    <div class="eyebrow">Открытая мини-энциклопедия</div>
+    <h1>Страны как ориентиры, а не строки</h1>
+    <p class="hero-lead">Каждая карточка отвечает на два вопроса: что важно знать о стране и как найти ее на глобусе. Сведения подобраны для обучения и не заменяют официальные справочники.</p>
+    <div class="actions"><a class="button primary" href="/play.html">Проверить себя</a><a class="button secondary" href="/sources.html">Источники данных</a></div>
+  </section>
+
+  <section class="section">
+    <div class="shell">
+      <div class="notice"><strong>Как пользоваться:</strong> выберите регион или начните вводить название, столицу, язык либо валюту. Карточки содержат устойчивые сведения; изменчивые показатели намеренно не используются без даты.</div>
+      <div class="country-tools">
+        <input class="country-search" id="country-search" type="search" placeholder="Найти страну, столицу, язык или валюту…" aria-label="Поиск по энциклопедии">
+        <button class="filter-btn active" data-region="all">Все</button>
+        <button class="filter-btn" data-region="europe">Европа</button>
+        <button class="filter-btn" data-region="asia">Азия</button>
+        <button class="filter-btn" data-region="africa">Африка</button>
+        <button class="filter-btn" data-region="americas">Америка</button>
+        <button class="filter-btn" data-region="oceania">Океания</button>
+      </div>
+
+      <div class="country-grid" id="country-grid">
+        <article class="country-card" id="armenia" data-region="asia" data-search="армения ереван армянский драм кавказ">
+          <div class="card-kicker">Южный Кавказ</div><h2>Армения</h2>
+          <div class="country-meta"><span><b>Столица:</b> Ереван</span><span><b>Язык:</b> армянский</span><span><b>Валюта:</b> армянский драм</span><span><b>Регион:</b> Западная Азия</span></div>
+          <p>Армения не имеет выхода к морю. На глобусе ее удобно искать южнее Грузии, западнее Азербайджана и севернее Ирана. Гористый рельеф и положение в Южном Кавказе важнее размера страны как ориентир.</p>
+        </article>
+
+        <article class="country-card" id="georgia" data-region="asia" data-search="грузия тбилиси грузинский лари кавказ черное море">
+          <div class="card-kicker">Южный Кавказ</div><h2>Грузия</h2>
+          <div class="country-meta"><span><b>Столица:</b> Тбилиси</span><span><b>Язык:</b> грузинский</span><span><b>Валюта:</b> грузинский лари</span><span><b>Регион:</b> Кавказ</span></div>
+          <p>Страна расположена на восточном побережье Черного моря, между Большим Кавказом и Южным Кавказом. Для поиска сначала найдите Черное море, затем его восточный край между Турцией и Россией.</p>
+        </article>
+
+        <article class="country-card" id="ukraine" data-region="europe" data-search="украина киев київ украинский гривна черное море европа">
+          <div class="card-kicker">Восточная Европа</div><h2>Украина</h2>
+          <div class="country-meta"><span><b>Столица:</b> Киев</span><span><b>Язык:</b> украинский</span><span><b>Валюта:</b> гривна</span><span><b>Регион:</b> Восточная Европа</span></div>
+          <p>Украина занимает крупную территорию к северу от Черного моря. На западе она соседствует со странами Центральной Европы, а Карпаты образуют заметный природный ориентир в юго-западной части.</p>
+        </article>
+
+        <article class="country-card" id="poland" data-region="europe" data-search="польша варшава польский злотый балтийское море">
+          <div class="card-kicker">Центральная Европа</div><h2>Польша</h2>
+          <div class="country-meta"><span><b>Столица:</b> Варшава</span><span><b>Язык:</b> польский</span><span><b>Валюта:</b> злотый</span><span><b>Регион:</b> Центральная Европа</span></div>
+          <p>Польша выходит к Балтийскому морю и лежит между Германией, Чехией, Словакией, Украиной, Беларусью, Литвой и российской Калининградской областью. Ее удобно использовать как центральный ориентир восточнее Германии.</p>
+        </article>
+
+        <article class="country-card" id="germany" data-region="europe" data-search="германия берлин немецкий евро центральная европа">
+          <div class="card-kicker">Центральная Европа</div><h2>Германия</h2>
+          <div class="country-meta"><span><b>Столица:</b> Берлин</span><span><b>Язык:</b> немецкий</span><span><b>Валюта:</b> евро</span><span><b>Регион:</b> Центральная Европа</span></div>
+          <p>Германия находится между Северным и Балтийским морями на севере и Альпийским регионом на юге. Девять сухопутных соседей делают ее одним из лучших ориентиров для изучения европейской карты.</p>
+        </article>
+
+        <article class="country-card" id="france" data-region="europe" data-search="франция париж французский евро атлантика средиземное море">
+          <div class="card-kicker">Западная Европа</div><h2>Франция</h2>
+          <div class="country-meta"><span><b>Столица:</b> Париж</span><span><b>Язык:</b> французский</span><span><b>Валюта:</b> евро</span><span><b>Регион:</b> Западная Европа</span></div>
+          <p>Европейская часть Франции выходит к Атлантическому океану, Ла-Маншу и Средиземному морю. На карте страна расположена между Испанией, Италией, Германией и странами Бенилюкса.</p>
+        </article>
+
+        <article class="country-card" id="spain" data-region="europe" data-search="испания мадрид испанский евро пиренейский полуостров">
+          <div class="card-kicker">Юго-Западная Европа</div><h2>Испания</h2>
+          <div class="country-meta"><span><b>Столица:</b> Мадрид</span><span><b>Общий язык:</b> испанский</span><span><b>Валюта:</b> евро</span><span><b>Ориентир:</b> Пиренейский полуостров</span></div>
+          <p>Испания занимает большую часть Пиренейского полуострова; Португалия находится западнее. Пиренеи отделяют полуостров от Франции, а южное побережье обращено к Средиземному морю.</p>
+        </article>
+
+        <article class="country-card" id="italy" data-region="europe" data-search="италия рим итальянский евро апеннинский полуостров">
+          <div class="card-kicker">Южная Европа</div><h2>Италия</h2>
+          <div class="country-meta"><span><b>Столица:</b> Рим</span><span><b>Язык:</b> итальянский</span><span><b>Валюта:</b> евро</span><span><b>Ориентир:</b> Апеннинский полуостров</span></div>
+          <p>Италию легко узнать по вытянутому полуострову в центральной части Средиземного моря. К северу находятся Альпы, а рядом с южной оконечностью — остров Сицилия.</p>
+        </article>
+
+        <article class="country-card" id="united-kingdom" data-region="europe" data-search="великобритания соединенное королевство лондон английский фунт острова">
+          <div class="card-kicker">Северо-Западная Европа</div><h2>Соединенное Королевство</h2>
+          <div class="country-meta"><span><b>Столица:</b> Лондон</span><span><b>Основной язык:</b> английский</span><span><b>Валюта:</b> фунт стерлингов</span><span><b>Ориентир:</b> Британские острова</span></div>
+          <p>Государство занимает остров Великобритания и северо-восточную часть острова Ирландия. От материковой Европы его отделяют Ла-Манш и Северное море.</p>
+        </article>
+
+        <article class="country-card" id="sweden" data-region="europe" data-search="швеция стокгольм шведский крона скандинавия">
+          <div class="card-kicker">Северная Европа</div><h2>Швеция</h2>
+          <div class="country-meta"><span><b>Столица:</b> Стокгольм</span><span><b>Язык:</b> шведский</span><span><b>Валюта:</b> шведская крона</span><span><b>Регион:</b> Скандинавия</span></div>
+          <p>Швеция занимает восточную часть Скандинавского полуострова. Норвегия находится западнее, Финляндия — восточнее, а длинное побережье обращено к Балтийскому морю.</p>
+        </article>
+
+        <article class="country-card" id="japan" data-region="asia" data-search="япония токио японский иена восточная азия острова">
+          <div class="card-kicker">Восточная Азия</div><h2>Япония</h2>
+          <div class="country-meta"><span><b>Столица:</b> Токио</span><span><b>Язык:</b> японский</span><span><b>Валюта:</b> иена</span><span><b>Ориентир:</b> островная дуга</span></div>
+          <p>Япония представляет собой архипелаг к востоку от Корейского полуострова и Китая. Четыре крупнейших острова вытянуты с северо-востока на юго-запад вдоль окраины Тихого океана.</p>
+        </article>
+
+        <article class="country-card" id="china" data-region="asia" data-search="китай пекин китайский юань восточная азия">
+          <div class="card-kicker">Восточная Азия</div><h2>Китай</h2>
+          <div class="country-meta"><span><b>Столица:</b> Пекин</span><span><b>Официальный язык:</b> стандартный китайский</span><span><b>Валюта:</b> юань</span><span><b>Регион:</b> Восточная Азия</span></div>
+          <p>Китай занимает большую часть востока Азии и выходит к морям западной части Тихого океана. Монголия и Россия расположены севернее, а Гималайский регион — на юго-западе.</p>
+        </article>
+
+        <article class="country-card" id="india" data-region="asia" data-search="индия нью-дели хинди английский рупия южная азия">
+          <div class="card-kicker">Южная Азия</div><h2>Индия</h2>
+          <div class="country-meta"><span><b>Столица:</b> Нью-Дели</span><span><b>На уровне союза:</b> хинди и английский</span><span><b>Валюта:</b> индийская рупия</span><span><b>Ориентир:</b> Индостан</span></div>
+          <p>Индия занимает основную часть полуострова Индостан, выступающего в Индийский океан. На севере естественным ориентиром служат Гималаи, а по обе стороны расположены Аравийское море и Бенгальский залив.</p>
+        </article>
+
+        <article class="country-card" id="kazakhstan" data-region="asia" data-search="казахстан астана казахский русский тенге центральная азия каспий">
+          <div class="card-kicker">Центральная Азия</div><h2>Казахстан</h2>
+          <div class="country-meta"><span><b>Столица:</b> Астана</span><span><b>Государственный язык:</b> казахский</span><span><b>Валюта:</b> тенге</span><span><b>Ориентир:</b> север Центральной Азии</span></div>
+          <p>Казахстан простирается от Каспийского моря до границы с Китаем. Это крупнейшее государство мира без выхода к Мировому океану; большая часть северной границы соприкасается с Россией.</p>
+        </article>
+
+        <article class="country-card" id="turkey" data-region="asia" data-search="турция анкара турецкий лира анатолия босфор">
+          <div class="card-kicker">Западная Азия</div><h2>Турция</h2>
+          <div class="country-meta"><span><b>Столица:</b> Анкара</span><span><b>Язык:</b> турецкий</span><span><b>Валюта:</b> турецкая лира</span><span><b>Ориентир:</b> Анатолия</span></div>
+          <p>Основная часть страны занимает полуостров Анатолия между Черным и Средиземным морями. Проливы Босфор и Дарданеллы соединяют Черное море со Средиземноморьем и отделяют европейскую часть от азиатской.</p>
+        </article>
+
+        <article class="country-card" id="thailand" data-region="asia" data-search="таиланд бангкок тайский бат юго-восточная азия">
+          <div class="card-kicker">Юго-Восточная Азия</div><h2>Таиланд</h2>
+          <div class="country-meta"><span><b>Столица:</b> Бангкок</span><span><b>Язык:</b> тайский</span><span><b>Валюта:</b> бат</span><span><b>Регион:</b> Индокитай</span></div>
+          <p>Таиланд расположен в центральной части полуострова Индокитай. Его южная часть вытянута к Малайскому полуострову, а соседями являются Мьянма, Лаос, Камбоджа и Малайзия.</p>
+        </article>
+
+        <article class="country-card" id="saudi-arabia" data-region="asia" data-search="саудовская аравия эр-рияд арабский риял аравийский полуостров">
+          <div class="card-kicker">Западная Азия</div><h2>Саудовская Аравия</h2>
+          <div class="country-meta"><span><b>Столица:</b> Эр-Рияд</span><span><b>Язык:</b> арабский</span><span><b>Валюта:</b> саудовский риял</span><span><b>Ориентир:</b> Аравийский полуостров</span></div>
+          <p>Государство занимает большую часть Аравийского полуострова и имеет берега Красного моря и Персидского залива. Йемен и Оман расположены южнее и юго-восточнее.</p>
+        </article>
+
+        <article class="country-card" id="egypt" data-region="africa" data-search="египет каир арабский египетский фунт нил синай">
+          <div class="card-kicker">Северо-Восточная Африка</div><h2>Египет</h2>
+          <div class="country-meta"><span><b>Столица:</b> Каир</span><span><b>Язык:</b> арабский</span><span><b>Валюта:</b> египетский фунт</span><span><b>Ориентир:</b> Нил и Синай</span></div>
+          <p>Большинство населения и городов связано с долиной и дельтой Нила. Синайский полуостров находится в Азии, поэтому Египет соединяет северо-восток Африки с Западной Азией.</p>
+        </article>
+
+        <article class="country-card" id="morocco" data-region="africa" data-search="марокко рабат арабский амазигский дирхам атлас">
+          <div class="card-kicker">Северо-Западная Африка</div><h2>Марокко</h2>
+          <div class="country-meta"><span><b>Столица:</b> Рабат</span><span><b>Официальные языки:</b> арабский и амазигский</span><span><b>Валюта:</b> дирхам</span><span><b>Ориентир:</b> Атлантика и Атлас</span></div>
+          <p>Марокко расположено в северо-западном углу Африки, напротив Испании через Гибралтарский пролив. Страна выходит к Атлантическому океану и Средиземному морю.</p>
+        </article>
+
+        <article class="country-card" id="kenya" data-region="africa" data-search="кения найроби суахили английский шиллинг восточная африка">
+          <div class="card-kicker">Восточная Африка</div><h2>Кения</h2>
+          <div class="country-meta"><span><b>Столица:</b> Найроби</span><span><b>Официальные языки:</b> суахили и английский</span><span><b>Валюта:</b> кенийский шиллинг</span><span><b>Ориентир:</b> экватор и Индийский океан</span></div>
+          <p>Экватор пересекает территорию Кении, а восточная граница выходит к Индийскому океану. Страна находится южнее Эфиопии и восточнее Уганды, рядом с Великими Африканскими озерами.</p>
+        </article>
+
+        <article class="country-card" id="south-africa" data-region="africa" data-search="юар южная африка претория кейптаун ранд официальные языки">
+          <div class="card-kicker">Южная Африка</div><h2>Южно-Африканская Республика</h2>
+          <div class="country-meta"><span><b>Административная столица:</b> Претория</span><span><b>Официальные языки:</b> 12</span><span><b>Валюта:</b> ранд</span><span><b>Ориентир:</b> юг континента</span></div>
+          <p>ЮАР занимает южную оконечность Африки между Атлантическим и Индийским океанами. Государственные функции распределены между Преторией, Кейптауном и Блумфонтейном; внутри территории полностью находится Лесото.</p>
+        </article>
+
+        <article class="country-card" id="nigeria" data-region="africa" data-search="нигерия абуджа английский найра гвинейский залив">
+          <div class="card-kicker">Западная Африка</div><h2>Нигерия</h2>
+          <div class="country-meta"><span><b>Столица:</b> Абуджа</span><span><b>Официальный язык:</b> английский</span><span><b>Валюта:</b> найра</span><span><b>Ориентир:</b> Гвинейский залив</span></div>
+          <p>Нигерия расположена на северном берегу Гвинейского залива. Камерун находится восточнее, Бенин западнее, а река Нигер и ее дельта служат важными физико-географическими ориентирами.</p>
+        </article>
+
+        <article class="country-card" id="usa" data-region="americas" data-search="сша соединенные штаты вашингтон доллар северная америка">
+          <div class="card-kicker">Северная Америка</div><h2>Соединенные Штаты</h2>
+          <div class="country-meta"><span><b>Столица:</b> Вашингтон</span><span><b>Наиболее распространенный язык:</b> английский</span><span><b>Валюта:</b> доллар США</span><span><b>Регион:</b> Северная Америка</span></div>
+          <p>Основная территория США расположена между Канадой и Мексикой и выходит к Атлантическому и Тихому океанам. Аляска отделена Канадой, а Гавайи находятся в центральной части Тихого океана.</p>
+        </article>
+
+        <article class="country-card" id="canada" data-region="americas" data-search="канада оттава английский французский канадский доллар арктика">
+          <div class="card-kicker">Северная Америка</div><h2>Канада</h2>
+          <div class="country-meta"><span><b>Столица:</b> Оттава</span><span><b>Официальные языки:</b> английский и французский</span><span><b>Валюта:</b> канадский доллар</span><span><b>Ориентир:</b> север материка</span></div>
+          <p>Канада простирается от Атлантического до Тихого и Северного Ледовитого океана. Большая часть населения сосредоточена ближе к южной границе с США, а север включает обширный Арктический архипелаг.</p>
+        </article>
+
+        <article class="country-card" id="mexico" data-region="americas" data-search="мексика мехико испанский песо северная америка">
+          <div class="card-kicker">Юг Северной Америки</div><h2>Мексика</h2>
+          <div class="country-meta"><span><b>Столица:</b> Мехико</span><span><b>Наиболее распространенный язык:</b> испанский</span><span><b>Валюта:</b> мексиканское песо</span><span><b>Ориентир:</b> между США и Центральной Америкой</span></div>
+          <p>Мексика сужается от границы с США к Гватемале и Белизу. Полуостров Калифорния вытянут вдоль Тихого океана, а Юкатан выступает между Мексиканским заливом и Карибским морем.</p>
+        </article>
+
+        <article class="country-card" id="brazil" data-region="americas" data-search="бразилия бразилиа португальский реал амазонка южная америка">
+          <div class="card-kicker">Южная Америка</div><h2>Бразилия</h2>
+          <div class="country-meta"><span><b>Столица:</b> Бразилиа</span><span><b>Язык:</b> португальский</span><span><b>Валюта:</b> бразильский реал</span><span><b>Ориентир:</b> восток континента</span></div>
+          <p>Бразилия — крупнейшее государство Южной Америки и занимает значительную часть бассейна Амазонки. Она граничит почти со всеми странами континента, кроме Чили и Эквадора.</p>
+        </article>
+
+        <article class="country-card" id="argentina" data-region="americas" data-search="аргентина буэнос-айрес испанский песо патагоня анды">
+          <div class="card-kicker">Южная Америка</div><h2>Аргентина</h2>
+          <div class="country-meta"><span><b>Столица:</b> Буэнос-Айрес</span><span><b>Основной язык:</b> испанский</span><span><b>Валюта:</b> аргентинское песо</span><span><b>Ориентир:</b> юго-восток континента</span></div>
+          <p>Аргентина вытянута с севера на юг между Андами и Атлантическим океаном. Чили идет узкой полосой вдоль ее западной границы, а южная часть относится к Патагонии.</p>
+        </article>
+
+        <article class="country-card" id="chile" data-region="americas" data-search="чили сантьяго испанский песо анды тихий океан">
+          <div class="card-kicker">Запад Южной Америки</div><h2>Чили</h2>
+          <div class="country-meta"><span><b>Столица:</b> Сантьяго</span><span><b>Язык:</b> испанский</span><span><b>Валюта:</b> чилийское песо</span><span><b>Ориентир:</b> полоса между Андами и океаном</span></div>
+          <p>Чили — одна из самых вытянутых стран мира. Она тянется вдоль тихоокеанского побережья Южной Америки, зажатая между Андами и океаном.</p>
+        </article>
+
+        <article class="country-card" id="peru" data-region="americas" data-search="перу лима испанский кечуа аймара соль анды">
+          <div class="card-kicker">Запад Южной Америки</div><h2>Перу</h2>
+          <div class="country-meta"><span><b>Столица:</b> Лима</span><span><b>Официальные языки:</b> испанский и региональные языки</span><span><b>Валюта:</b> соль</span><span><b>Ориентир:</b> центральные Анды</span></div>
+          <p>Перу лежит на тихоокеанском побережье между Эквадором, Колумбией, Бразилией, Боливией и Чили. Запад занимает сухое побережье, центр — Анды, а восток относится к бассейну Амазонки.</p>
+        </article>
+
+        <article class="country-card" id="australia" data-region="oceania" data-search="австралия канберра английский австралийский доллар океания">
+          <div class="card-kicker">Океания</div><h2>Австралия</h2>
+          <div class="country-meta"><span><b>Столица:</b> Канберра</span><span><b>Основной язык:</b> английский</span><span><b>Валюта:</b> австралийский доллар</span><span><b>Ориентир:</b> материк-государство</span></div>
+          <p>Австралия занимает отдельный материк между Индийским и Тихим океанами. Большинство крупных городов находится у побережья, а внутренние районы отличаются засушливым климатом и низкой плотностью населения.</p>
+        </article>
+
+        <article class="country-card" id="new-zealand" data-region="oceania" data-search="новая зеландия веллингтон английский маори доллар океания">
+          <div class="card-kicker">Океания</div><h2>Новая Зеландия</h2>
+          <div class="country-meta"><span><b>Столица:</b> Веллингтон</span><span><b>Официальные языки:</b> маори, новозеландский жестовый; английский широко используется</span><span><b>Валюта:</b> новозеландский доллар</span><span><b>Ориентир:</b> юго-восточнее Австралии</span></div>
+          <p>Основную территорию образуют Северный и Южный острова, вытянутые с северо-востока на юго-запад. Страна находится далеко к юго-востоку от Австралии в южной части Тихого океана.</p>
+        </article>
+      </div>
+
+      <p id="no-results" class="notice" hidden>По этому запросу карточек пока нет. Попробуйте название региона, столицы, языка или валюты.</p>
     </div>
   </section>
 
-  <section class="grid content-section">
-    <article class="card">
-      <h2>Start with regions</h2>
-      <p>Regions reduce the size of the problem. If you know that Georgia is in Asia, Portugal is in Europe, and Ghana is in Africa, the globe becomes searchable instead of overwhelming.</p>
-    </article>
-    <article class="card">
-      <h2>Use capitals as anchors</h2>
-      <p>Capitals are strong memory hooks when they are connected to countries. Tbilisi anchors Georgia, Ottawa anchors Canada, Brasilia anchors Brazil, and Astana anchors Kazakhstan.</p>
-    </article>
-    <article class="card">
-      <h2>Separate facts from clues</h2>
-      <p>Languages and currencies are useful reference facts, but they are often too broad for fair guessing. The game tries to use precise clues, while the atlas keeps the wider context.</p>
-    </article>
-  </section>
-
-  <section class="card content-section">
-    <h2>Example learning paths</h2>
-    <div class="grid two">
-      <div class="fact"><b>Georgia</b><span>Look in the Caucasus region. Tbilisi is the capital, Georgian is the official language, and the Georgian lari is the currency. On the globe, it helps to find the Black Sea and the mountain belt between Europe and Asia.</span></div>
-      <div class="fact"><b>Japan</b><span>Look east of the Korean Peninsula. Tokyo is the capital. The island chain shape makes Japan easier to recognize once you remember its north-south curve.</span></div>
-      <div class="fact"><b>Brazil</b><span>Start with South America. Brazil is the largest country on the continent, Brasilia is the capital, and the Amazon region is one of the major geographic anchors.</span></div>
-      <div class="fact"><b>Egypt</b><span>Find northeast Africa and the Nile. Cairo is the capital, and the country links Africa, the Mediterranean and the Red Sea in a way that is easy to remember visually.</span></div>
-      <div class="fact"><b>Canada</b><span>Use North America as the starting region. Canada stretches across the north of the continent; Ottawa is the capital, and the country is easier to spot by its size and Arctic coastline.</span></div>
-      <div class="fact"><b>New Zealand</b><span>Look southeast of Australia. Wellington is the capital. The two main islands make the country a strong visual target once you know where Oceania is.</span></div>
+  <section class="section dark-section">
+    <div class="shell">
+      <div class="section-head">
+        <div><div class="section-kicker">Продолжение каталога</div><h2>Почему здесь еще не все страны?</h2></div>
+        <p class="section-intro">Лучше опубликовать меньше аккуратно проверенных карточек, чем автоматически заполнить каталог неточными шаблонами. Энциклопедия расширяется по регионам, а полный набор стран уже доступен на интерактивном глобусе.</p>
+      </div>
+      <div class="actions"><a class="button primary" href="/play.html">Все страны на глобусе</a><a class="button secondary" href="/sources.html">Методика проверки</a></div>
     </div>
   </section>
-
-  <section class="card content-section">
-    <h2>How the atlas supports the game</h2>
-    <p>The atlas gives players a slower place to check facts before returning to timed play. If a player repeatedly misses a country, the best next step is to open the card, read the region and capital, then view the country on the globe. That loop turns a failed answer into a useful map memory.</p>
-    <p>WorldOrWrong also keeps educational clarity in mind. It avoids presenting sensitive political claims as game prompts, and it treats country facts as reference material rather than arguments. The goal is to help players learn geography in a neutral, practical way.</p>
-  </section>
-
-  <section class="card content-section">
-    <h2>Suggested practice routine</h2>
-    <ol>
-      <li>Choose one region in the atlas and read five country cards.</li>
-      <li>Open the globe viewer and rotate to those countries.</li>
-      <li>Play a short solo round with the same region selected.</li>
-      <li>Review missed countries again in the atlas.</li>
-      <li>Repeat the same region the next day before moving to the whole world.</li>
-    </ol>
-  </section>
-
-  <footer class="footer">
-    <span>Country knowledge is stronger when every fact has a place on the map.</span>
-    <span><a href="/terms.html">Terms</a> / <a href="/privacy.html">Privacy</a></span>
-  </footer>
 </main>
+
+<footer class="site-footer">
+  <div class="shell footer-grid">
+    <div><h2>WorldOrWrong</h2><p>Карточки созданы для ориентации на карте и осмысленного повторения.</p></div>
+    <div class="footer-links"><strong>Изучать</strong><a href="/regions.html">Регионы</a><a href="/how-to-play.html">Как играть</a><a href="/play.html">Глобус</a></div>
+    <div class="footer-links"><strong>Проект</strong><a href="/about.html">О проекте</a><a href="/sources.html">Источники</a><a href="/privacy.html">Конфиденциальность</a></div>
+  </div>
+</footer>
+<script>
+(() => {
+  const input = document.getElementById("country-search");
+  const cards = [...document.querySelectorAll(".country-card")];
+  const buttons = [...document.querySelectorAll(".filter-btn")];
+  const empty = document.getElementById("no-results");
+  let region = "all";
+
+  function normalize(value) {
+    return String(value || "").toLocaleLowerCase("ru").replace(/ё/g, "е").trim();
+  }
+
+  function render() {
+    const query = normalize(input.value);
+    let visible = 0;
+    cards.forEach((card) => {
+      const regionMatches = region === "all" || card.dataset.region === region;
+      const textMatches = !query || normalize(card.dataset.search + " " + card.textContent).includes(query);
+      card.hidden = !(regionMatches && textMatches);
+      if (!card.hidden) visible += 1;
+    });
+    empty.hidden = visible !== 0;
+  }
+
+  input.addEventListener("input", render);
+  buttons.forEach((button) => {
+    button.addEventListener("click", () => {
+      region = button.dataset.region;
+      buttons.forEach((item) => item.classList.toggle("active", item === button));
+      render();
+    });
+  });
+})();
+</script>
 </body>
 </html>

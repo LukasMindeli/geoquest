@@ -7,10 +7,30 @@
     {
       "source": "/__/firebase/init.json",
       "destination": "https://worldorwrong.firebaseapp.com/__/firebase/init.json"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/play.html",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, follow"
+        }
+      ]
     },
     {
       "source": "/(.*)",
-      "destination": "/index.html"
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        }
+      ]
     }
   ]
 }
